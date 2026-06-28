@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <!-- スマホでのピンチイン・ズームを禁止し、100%表示に固定するメタタグ -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>パウパト・はたけのおてつだいゲーム</title>
+  <title>パウパトたたきゲーム</title>
   
   <!-- Tailwind CSS Play CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -69,7 +69,7 @@
       inset: -1px;
       border-radius: 50%;
       pointer-events: none;
-      z-index: 12; /* キャラクターの後ろ、エッジの手前 */
+      z-index: 5; /* キャラクター(z-index 15)の奥 */
       opacity: 0.9;
       transition: all 0.5s ease;
     }
@@ -337,6 +337,7 @@
       transform: translateY(110%);
       transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
       will-change: transform;
+      z-index: 15; /* 穴のデコレーション(z-index 5)より手前に配置して視認性を極限まで高める */
     }
 
     /* キャラクターの影を穴の中に落とすCSS擬似要素（奥行き感を強化） */
@@ -637,13 +638,12 @@
       <div class="mt-1">
         <!-- おひさま -->
         <div id="start-sun-icon" class="text-4xl mb-0.5 animate-bounce">☀️</div>
-        <h1 class="text-2xl md:text-3xl font-extrabold text-blue-600 tracking-wider leading-none drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
+        <h1 class="text-3xl md:text-4xl font-extrabold text-blue-600 tracking-wider leading-none drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
           パウパト<br>
-          <span class="text-emerald-600 text-lg md:text-xl">はたけの おてつだい</span><br>
-          <span class="text-orange-500 text-2xl md:text-3xl">ゲーム</span>
+          <span class="text-orange-500 text-3xl md:text-4xl">たたきゲーム</span>
         </h1>
         <p class="text-[9px] font-bold text-gray-700 mt-1 bg-white/70 px-2.5 py-0.5 rounded-full inline-block">
-          たいしょうねんれい：3〜5さい 🎵おんがくつき
+          🎵おんがくつき
         </p>
         <br>
         <!-- ベストスコア表示 -->
@@ -673,17 +673,6 @@
         </p>
       </div>
 
-      <!-- プレイ履歴エリア (Start Screen) -->
-      <div id="start-history-container" class="w-full bg-white/90 p-2.5 rounded-xl border-2 border-amber-300 shadow-sm hidden">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-[10px] font-black text-amber-800 flex items-center gap-1">📈 さいきんの プレイきろく (10かい)</span>
-          <button id="btn-clear-history" class="text-[8px] bg-red-100 hover:bg-red-200 text-red-600 font-bold px-1.5 py-0.5 rounded-md transition-colors">きろくをけす</button>
-        </div>
-        <div id="start-history-list" class="max-h-24 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin">
-          <!-- 履歴項目が動的に生成されます -->
-        </div>
-      </div>
-
       <!-- 難易度選択スタートボタン（やさしい & むずかしい の2種類から選んで直接スタート！） -->
       <div class="flex flex-col gap-3 w-full max-w-xs">
         <!-- やさしいボタン -->
@@ -697,6 +686,37 @@
           <span class="block text-yellow-100 text-[10px] md:text-xs font-black tracking-widest mb-0.5 text-pop-outline-yellow">⚡ はやくでてくるよ 🎵</span>
           <span class="text-pop-outline-red font-black text-2xl md:text-3xl tracking-wider block">🔴 むずかしい</span>
         </button>
+      </div>
+
+      <!-- プレイ記録を見るボタンと履歴エリア (Start Screen) -->
+      <div class="w-full max-w-xs flex flex-col items-center mt-1">
+        <!-- 履歴を開くトグルボタン -->
+        <button id="btn-toggle-history" class="w-full py-2.5 px-4 bg-amber-100 hover:bg-amber-200 text-amber-800 border-2 border-amber-300 font-extrabold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all focus:outline-none">
+          <span>📈 プレイきろくを みる</span>
+          <span id="history-toggle-icon" class="text-xs transition-transform duration-300">▼</span>
+        </button>
+
+        <!-- 履歴エリア（ボタンを押したら表示される） -->
+        <div id="start-history-container" class="w-full bg-white/95 p-2.5 rounded-xl border-2 border-amber-300 shadow-md mt-2 hidden transition-all">
+          <!-- 難易度切り替え用のタブ -->
+          <div class="flex justify-between border-b-2 border-amber-100 pb-1.5 mb-2 gap-1.5">
+            <button id="btn-tab-easy" class="flex-1 text-[9px] font-black py-1 px-1.5 rounded-lg bg-emerald-500 text-white border border-emerald-600 shadow-sm transition-all focus:outline-none">
+              🟢 やさしい (0)
+            </button>
+            <button id="btn-tab-hard" class="flex-1 text-[9px] font-black py-1 px-1.5 rounded-lg bg-gray-100 text-gray-500 border border-gray-200 transition-all focus:outline-none">
+              🔴 むずかしい (0)
+            </button>
+          </div>
+
+          <div class="flex items-center justify-between mb-1">
+            <span id="history-filter-title" class="text-[9px] font-extrabold text-amber-800 flex items-center gap-1">🟢 やさしい の きろく (10かい)</span>
+            <button id="btn-clear-history" class="text-[8px] bg-red-100 hover:bg-red-200 text-red-600 font-bold px-1.5 py-0.5 rounded-md transition-colors focus:outline-none">きろくをけす</button>
+          </div>
+
+          <div id="start-history-list" class="max-h-24 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin">
+            <!-- 履歴項目が動的に生成されます -->
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1094,6 +1114,7 @@
     const fallingContainer = document.getElementById('falling-container');
     const bestScoreText = document.getElementById('best-score-text');
     let bestScore = 0;
+    let currentHistoryTab = 'easy'; // 'easy' または 'hard' の履歴タブ状態
 
     // 画像の市松模様背景（薄いグレーと白の格子）や純白の背景を動的に検知し、外側と繋がっている背景のみをCanvasを使って完全に透過させる関数
     function processAndCleanImage(imgElement) {
@@ -2143,42 +2164,115 @@
         const resultContainer = document.getElementById('result-history-container');
         const resultList = document.getElementById('result-history-list');
         
-        if (history.length === 0) {
-          if (startContainer) startContainer.classList.add('hidden');
-          if (resultContainer) resultContainer.classList.add('hidden');
-          return;
+        const btnTabEasy = document.getElementById('btn-tab-easy');
+        const btnTabHard = document.getElementById('btn-tab-hard');
+        const historyFilterTitle = document.getElementById('history-filter-title');
+        
+        // 難易度別に全記録をフィルタリング
+        const easyRecords = history.filter(record => record.difficulty === 'やさしい');
+        const hardRecords = history.filter(record => record.difficulty === 'むずかしい');
+        
+        // スタート画面のタブバッジの件数表示を更新
+        if (btnTabEasy) {
+          btnTabEasy.textContent = `🟢 やさしい (${easyRecords.length})`;
+          if (currentHistoryTab === 'easy') {
+            btnTabEasy.className = "flex-1 text-[9px] font-black py-1 px-1.5 rounded-lg bg-emerald-500 text-white border border-emerald-600 shadow-sm transition-all focus:outline-none";
+          } else {
+            btnTabEasy.className = "flex-1 text-[9px] font-black py-1 px-1.5 rounded-lg bg-gray-100 text-gray-500 border border-gray-200 transition-all focus:outline-none";
+          }
+        }
+        if (btnTabHard) {
+          btnTabHard.textContent = `🔴 むずかしい (${hardRecords.length})`;
+          if (currentHistoryTab === 'hard') {
+            btnTabHard.className = "flex-1 text-[9px] font-black py-1 px-1.5 rounded-lg bg-red-500 text-white border border-red-600 shadow-sm transition-all focus:outline-none";
+          } else {
+            btnTabHard.className = "flex-1 text-[9px] font-black py-1 px-1.5 rounded-lg bg-gray-100 text-gray-500 border border-gray-200 transition-all focus:outline-none";
+          }
         }
         
-        if (startContainer) startContainer.classList.remove('hidden');
-        if (resultContainer) resultContainer.classList.remove('hidden');
+        // 現在アクティブな難易度フィルタのタイトル表記を更新
+        if (historyFilterTitle) {
+          if (currentHistoryTab === 'easy') {
+            historyFilterTitle.innerHTML = `🟢 やさしい の きろく (10かい)`;
+          } else {
+            historyFilterTitle.innerHTML = `🔴 むずかしい の きろく (10かい)`;
+          }
+        }
         
-        const renderList = (listElement) => {
-          if (!listElement) return;
-          listElement.innerHTML = '';
-          history.forEach((record, idx) => {
-            const item = document.createElement('div');
-            const isLatest = idx === 0;
-            item.className = `flex items-center justify-between text-[10px] p-1 rounded-md transition-all ${isLatest ? 'bg-amber-100 font-bold border border-amber-300 shadow-sm' : 'bg-gray-50 border border-gray-100 text-gray-600'}`;
-            
-            const diffColor = record.difficulty === 'やさしい' ? 'text-emerald-600' : 'text-red-500';
-            
-            item.innerHTML = `
-              <div class="flex items-center space-x-1.5">
-                <span class="text-xs">${record.medal}</span>
-                <span class="font-extrabold ${isLatest ? 'text-orange-600 text-[11px]' : 'text-gray-800'}">${record.score} てん</span>
-                <span class="${diffColor} text-[8px] font-black">(${record.difficulty})</span>
-              </div>
-              <div class="flex items-center space-x-1.5">
-                ${isLatest ? '<span class="bg-red-500 text-white text-[7px] font-bold px-1 rounded-full animate-pulse scale-90">NEW</span>' : ''}
-                <span class="text-[8px] text-gray-400 font-sans">${record.time}</span>
-              </div>
-            `;
-            listElement.appendChild(item);
-          });
-        };
+        // 現在のタブに応じた表示対象データ
+        const currentStartRecords = currentHistoryTab === 'easy' ? easyRecords : hardRecords;
         
-        renderList(startList);
-        renderList(resultList);
+        // スタート画面のリスト表示
+        if (startList) {
+          startList.innerHTML = '';
+          if (currentStartRecords.length === 0) {
+            const emptyItem = document.createElement('div');
+            emptyItem.className = 'text-center text-gray-400 text-[10px] py-4 font-bold';
+            emptyItem.textContent = 'まだ おてつだいの きろくが ありません 🌟';
+            startList.appendChild(emptyItem);
+          } else {
+            currentStartRecords.forEach((record, idx) => {
+              const item = document.createElement('div');
+              const isLatest = idx === 0;
+              item.className = `flex items-center justify-between text-[10px] p-1.5 rounded-md transition-all ${isLatest ? 'bg-amber-100 font-bold border border-amber-300 shadow-sm' : 'bg-gray-50 border border-gray-100 text-gray-600'}`;
+              
+              item.innerHTML = `
+                <div class="flex items-center space-x-1.5">
+                  <span class="text-xs">${record.medal}</span>
+                  <span class="font-extrabold ${isLatest ? 'text-orange-600 text-[11px]' : 'text-gray-800'}">${record.score} てん</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  ${isLatest ? '<span class="bg-red-500 text-white text-[7px] font-bold px-1 rounded-full animate-pulse scale-90">NEW</span>' : ''}
+                  <span class="text-[8px] text-gray-400 font-sans">${record.time}</span>
+                </div>
+              `;
+              startList.appendChild(item);
+            });
+          }
+        }
+        
+        // 結果画面のリスト表示（最後に遊んだ難易度に合わせて表示）
+        if (resultList) {
+          resultList.innerHTML = '';
+          const activeDiffName = currentDifficulty === 'easy' ? 'やさしい' : 'むずかしい';
+          const currentResultRecords = history.filter(record => record.difficulty === activeDiffName);
+          
+          if (currentResultRecords.length === 0) {
+            const emptyItem = document.createElement('div');
+            emptyItem.className = 'text-center text-gray-400 text-[10px] py-3';
+            emptyItem.textContent = 'きろくが ありません';
+            resultList.appendChild(emptyItem);
+          } else {
+            currentResultRecords.forEach((record, idx) => {
+              const item = document.createElement('div');
+              const isLatest = idx === 0;
+              item.className = `flex items-center justify-between text-[10px] p-1.5 rounded-md transition-all ${isLatest ? 'bg-yellow-100 font-bold border border-yellow-300 shadow-sm' : 'bg-gray-50 border border-gray-100 text-gray-600'}`;
+              
+              item.innerHTML = `
+                <div class="flex items-center space-x-1.5">
+                  <span class="text-xs">${record.medal}</span>
+                  <span class="font-extrabold ${isLatest ? 'text-orange-600 text-[11px]' : 'text-gray-800'}">${record.score} てん</span>
+                  <span class="text-[8px] text-gray-400">(${record.difficulty})</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  ${isLatest ? '<span class="bg-red-500 text-white text-[7px] font-bold px-1 rounded-full animate-pulse scale-90">NEW</span>' : ''}
+                  <span class="text-[8px] text-gray-400 font-sans">${record.time}</span>
+                </div>
+              `;
+              resultList.appendChild(item);
+            });
+          }
+        }
+        
+        // 結果画面のコンテナ表示制御：履歴があれば表示
+        if (resultContainer) {
+          if (history.length > 0) {
+            resultContainer.classList.remove('hidden');
+          } else {
+            resultContainer.classList.add('hidden');
+          }
+        }
+        
       } catch (e) {
         console.error("プレイ履歴UIの更新に失敗しました:", e);
       }
@@ -2624,6 +2718,45 @@
 
       // プレイ履歴の読み込みと表示
       updateHistoryUI();
+
+      // 履歴トグルボタンのイベント登録
+      const btnToggleHistory = document.getElementById('btn-toggle-history');
+      const startHistoryContainer = document.getElementById('start-history-container');
+      const historyToggleIcon = document.getElementById('history-toggle-icon');
+      
+      if (btnToggleHistory && startHistoryContainer) {
+        btnToggleHistory.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isHidden = startHistoryContainer.classList.contains('hidden');
+          if (isHidden) {
+            startHistoryContainer.classList.remove('hidden');
+            if (historyToggleIcon) historyToggleIcon.textContent = '▲';
+          } else {
+            startHistoryContainer.classList.add('hidden');
+            if (historyToggleIcon) historyToggleIcon.textContent = '▼';
+          }
+        });
+      }
+
+      // 難易度やさしいタブのクリックイベント登録
+      const btnTabEasy = document.getElementById('btn-tab-easy');
+      if (btnTabEasy) {
+        btnTabEasy.addEventListener('click', (e) => {
+          e.stopPropagation();
+          currentHistoryTab = 'easy';
+          updateHistoryUI();
+        });
+      }
+
+      // 難易度むずかしいタブのクリックイベント登録
+      const btnTabHard = document.getElementById('btn-tab-hard');
+      if (btnTabHard) {
+        btnTabHard.addEventListener('click', (e) => {
+          e.stopPropagation();
+          currentHistoryTab = 'hard';
+          updateHistoryUI();
+        });
+      }
 
       // 履歴クリアボタンのイベント登録
       const btnClearHistory = document.getElementById('btn-clear-history');
