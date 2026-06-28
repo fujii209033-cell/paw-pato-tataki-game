@@ -22,13 +22,307 @@
       touch-action: manipulation;
     }
 
-    /* 畑の土の穴の3D風な影と立体感 */
+    /* 穴をタップしやすく、かつデコレーションがはみ出しても大丈夫なアウターコンテナ */
+    .hole-container {
+      position: relative;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease-out;
+      z-index: 10;
+      border-radius: 50%; /* 光の輪が正円に沿うように */
+      box-shadow: 0 0 0 0px transparent;
+    }
+
+    /* ユーザーがタップ可能な領域をより直感的に！ホバー・タッチ時の美しい「光の輪」エフェクト */
+    @media (hover: hover) {
+      .hole-container:hover {
+        box-shadow: 0 0 0 5px var(--sparkle-color-light, rgba(255,255,255,0.25)), 
+                    0 0 15px var(--sparkle-color, rgba(255,255,255,0.45));
+        transform: scale(1.03);
+      }
+    }
+    .hole-container:active {
+      transform: scale(0.93);
+      box-shadow: 0 0 0 8px var(--sparkle-color-light, rgba(255,255,255,0.35)), 
+                  0 0 25px var(--sparkle-color, rgba(255,255,255,0.65));
+      transition: all 0.08s ease;
+    }
+
+    /* 畑の土の穴の3D風な影と立体感（より深く、暗くリアルに掘られたシャドウに強化） */
     .soil-hole {
       position: relative;
-      background: radial-gradient(circle, #2d1a04 60%, #170d02 100%);
+      background: radial-gradient(circle, #1a0f02 50%, #080400 100%);
       border-radius: 50%;
-      box-shadow: inset 0 8px 12px rgba(0, 0, 0, 0.85), 
-                  0 3px 5px rgba(0, 0, 0, 0.2);
+      box-shadow: inset 0 10px 15px rgba(0, 0, 0, 0.95), 
+                  inset 0 -4px 8px rgba(0, 0, 0, 0.65),
+                  0 3px 5px rgba(0, 0, 0, 0.35);
+      width: 100%;
+      height: 100%;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.35);
+    }
+
+    /* 穴の境界部分（エッジ）に、季節ごとに異なる「草の根」や「氷の結晶」のテクスチャをCSSグラフィックスで表現 */
+    .soil-hole::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 12; /* キャラクターの後ろ、エッジの手前 */
+      opacity: 0.9;
+      transition: all 0.5s ease;
+    }
+
+    /* 季節ごとの穴の境界（エッジ）を静的から動的へ進化させるアニメーション定義 */
+    @keyframes springGlow {
+      0%, 100% {
+        transform: scale(1) rotate(0deg);
+        filter: hue-rotate(0deg) brightness(1);
+        box-shadow: inset 0 0 14px rgba(21, 128, 61, 0.75), 0 0 4px rgba(244, 143, 177, 0.45);
+      }
+      50% {
+        transform: scale(1.025) rotate(2deg);
+        filter: hue-rotate(10deg) brightness(1.15);
+        box-shadow: inset 0 0 22px rgba(21, 128, 61, 0.95), 0 0 10px rgba(244, 143, 177, 0.75); /* 桜ピンクが優雅に脈動 */
+      }
+    }
+
+    @keyframes summerGlow {
+      0%, 100% {
+        transform: scale(1) rotate(0deg);
+        filter: saturate(1) brightness(1);
+        box-shadow: inset 0 0 16px rgba(101, 163, 13, 0.75), 0 0 4px rgba(234, 179, 8, 0.3);
+      }
+      50% {
+        transform: scale(1.035) rotate(-3deg);
+        filter: saturate(1.4) brightness(1.25);
+        box-shadow: inset 0 0 24px rgba(101, 163, 13, 0.95), 0 0 12px rgba(234, 179, 8, 0.7); /* 青々とした緑と日差しがきらめく */
+      }
+    }
+
+    @keyframes autumnGlow {
+      0%, 100% {
+        transform: scale(1) rotate(0deg);
+        filter: hue-rotate(0deg);
+        box-shadow: inset 0 0 14px rgba(194, 65, 12, 0.75), 0 0 3px rgba(249, 115, 22, 0.35);
+      }
+      50% {
+        transform: scale(1.02) rotate(1.5deg);
+        filter: hue-rotate(-8deg) brightness(1.1);
+        box-shadow: inset 0 0 22px rgba(194, 65, 12, 0.9), 0 0 9px rgba(249, 115, 22, 0.65); /* 紅葉・楓オレンジが揺れる */
+      }
+    }
+
+    @keyframes winterGlow {
+      0%, 100% {
+        transform: scale(1) rotate(0deg);
+        filter: brightness(1) contrast(1);
+        box-shadow: inset 0 0 16px rgba(147, 197, 253, 0.7), 0 0 5px rgba(255, 255, 255, 0.4);
+      }
+      50% {
+        transform: scale(1.015) rotate(10deg); /* 氷の結晶がゆっくり優雅に回転 */
+        filter: brightness(1.25) contrast(1.2);
+        box-shadow: inset 0 0 26px rgba(147, 197, 253, 0.9), 0 0 15px rgba(255, 255, 255, 0.85); /* 氷や結晶がきらめき脈動 */
+      }
+    }
+
+    /* 春：若草の根っこ・さくらの花びらなどの新緑のグラデーション */
+    .spring-hole .soil-hole::before {
+      background-image: 
+        radial-gradient(ellipse at 50% 90%, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.2) 65%, transparent 100%), /* キャラクターの落とす深い闇の影 */
+        radial-gradient(circle at 30% 12%, rgba(134, 239, 172, 0.55) 0%, transparent 40%),
+        radial-gradient(circle at 75% 82%, rgba(251, 182, 206, 0.5) 0%, transparent 35%),
+        repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(22, 163, 74, 0.18) 10px, rgba(22, 163, 74, 0.18) 12px);
+      box-shadow: inset 0 12px 20px rgba(0, 0, 0, 0.95), inset 0 0 12px rgba(21, 128, 61, 0.65);
+      animation: springGlow 5s ease-in-out infinite;
+    }
+    
+    /* 夏：青々とした生い茂る夏草、元気いっぱいのグリーン */
+    .summer-hole .soil-hole::before {
+      background-image: 
+        radial-gradient(ellipse at 50% 90%, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.2) 65%, transparent 100%), /* キャラクターの落とす深い闇の影 */
+        radial-gradient(circle at 50% -3px, rgba(163, 230, 53, 0.65) 0%, transparent 45%),
+        radial-gradient(circle at 85% 68%, rgba(101, 163, 13, 0.55) 0%, transparent 40%),
+        repeating-linear-gradient(135deg, transparent, transparent 12px, rgba(74, 120, 4, 0.22) 12px, rgba(74, 120, 4, 0.22) 15px);
+      box-shadow: inset 0 12px 20px rgba(0, 0, 0, 0.95), inset 0 0 14px rgba(101, 163, 13, 0.7);
+      animation: summerGlow 3.8s ease-in-out infinite;
+    }
+
+    /* 秋：もみじや落ち葉のような、情緒あるオレンジ of グラデーション */
+    .autumn-hole .soil-hole::before {
+      background-image: 
+        radial-gradient(ellipse at 50% 90%, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.2) 65%, transparent 100%), /* キャラクターの落とす深い闇 of 影 */
+        radial-gradient(circle at 20% 22%, rgba(251, 146, 60, 0.55) 0%, transparent 45%),
+        radial-gradient(circle at 80% 78%, rgba(234, 88, 12, 0.5) 0%, transparent 40%),
+        repeating-linear-gradient(75deg, transparent, transparent 8px, rgba(194, 65, 12, 0.22) 8px, rgba(194, 65, 12, 0.22) 11px);
+      box-shadow: inset 0 12px 20px rgba(0, 0, 0, 0.95), inset 0 0 12px rgba(194, 65, 12, 0.7);
+      animation: autumnGlow 6s ease-in-out infinite;
+    }
+
+    /* 冬：雪の結晶やきらきら輝く氷のテクスチャ */
+    .winter-hole .soil-hole::before {
+      background-image: 
+        radial-gradient(ellipse at 50% 90%, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.2) 65%, transparent 100%), /* キャラクターの落とす深い闇 of 影 */
+        radial-gradient(circle at 50% -2px, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 40%),
+        radial-gradient(circle at 15% 72%, rgba(147, 197, 253, 0.65) 0%, transparent 35%),
+        repeating-linear-gradient(15deg, transparent, transparent 15px, rgba(219, 234, 254, 0.3) 15px, rgba(219, 234, 254, 0.3) 18px);
+      box-shadow: inset 0 12px 20px rgba(0, 0, 0, 0.95), inset 0 0 16px rgba(147, 197, 253, 0.65), 0 0 4px rgba(255, 255, 255, 0.3);
+      animation: winterGlow 4.5s ease-in-out infinite;
+    }
+
+    /* 3D風の土の盛り上がり（穴の下部に季節ごとのリアルな土のふくらみを追加） */
+    .hole-container::before {
+      content: '';
+      position: absolute;
+      left: 8%;
+      right: 8%;
+      bottom: -1px;
+      height: 16px;
+      border-radius: 50% / 100% 100% 0 0;
+      z-index: 25; /* キャラクターの上、デコレーションに馴染ませる */
+      pointer-events: none;
+      transition: all 0.5s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.35);
+    }
+
+    /* 季節ごとの盛り上がりのバリエーション */
+    .spring-hole::before {
+      background: linear-gradient(180deg, #6ec08a 0%, #15803d 45%, #4a2f0f 100%);
+      border-top: 2px solid #a7f3d0;
+    }
+    .summer-hole::before {
+      background: linear-gradient(180deg, #eab308 0%, #ca8a04 45%, #3f1e04 100%);
+      border-top: 2px solid #fef9c3;
+    }
+    .autumn-hole::before {
+      background: linear-gradient(180deg, #f97316 0%, #c2410c 45%, #351a02 100%);
+      border-top: 2px solid #ffedd5;
+    }
+    .winter-hole::before {
+      background: linear-gradient(180deg, #ffffff 25%, #bfdbfe 65%, #1e3a8a 100%);
+      border-top: 2px solid #f1f5f9;
+    }
+
+    /* 季節ごとの光の粒子・回転ドットサークル */
+    .hole-container::after {
+      content: '';
+      position: absolute;
+      inset: -3px; /* 穴の少し外側 */
+      border-radius: 50%;
+      border: 4px dotted transparent;
+      pointer-events: none;
+      transition: all 0.5s ease;
+      z-index: 8;
+      animation: rotateDotted 18s linear infinite, sparklePulse 2s ease-in-out infinite;
+    }
+
+    @keyframes rotateDotted {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes sparklePulse {
+      0%, 100% {
+        opacity: 0.65;
+        filter: drop-shadow(0 0 2px var(--sparkle-color, rgba(255,255,255,0.4))) brightness(1);
+      }
+      50% {
+        opacity: 1;
+        filter: drop-shadow(0 0 12px var(--sparkle-color, rgba(255,255,255,0.9))) brightness(1.4);
+      }
+    }
+
+    /* 季節ごとのきらめきカラー変数定義（光の輪にも対応） */
+    .spring-hole {
+      --sparkle-color: #fbcfe8; /* 桜ピンク */
+      --sparkle-color-light: rgba(251, 207, 232, 0.3);
+      --pulse-ripple-color: rgba(244, 143, 177, 0.85);
+    }
+    .spring-hole::after {
+      border-color: #fbcfe8;
+    }
+
+    .summer-hole {
+      --sparkle-color: #fde047; /* ひまわりゴールド */
+      --sparkle-color-light: rgba(253, 224, 71, 0.3);
+      --pulse-ripple-color: rgba(234, 179, 8, 0.85);
+    }
+    .summer-hole::after {
+      border-color: #fde047;
+    }
+
+    .autumn-hole {
+      --sparkle-color: #f97316; /* 楓オレンジ */
+      --sparkle-color-light: rgba(249, 115, 22, 0.3);
+      --pulse-ripple-color: rgba(249, 115, 22, 0.85);
+    }
+    .autumn-hole::after {
+      border-color: #f97316;
+    }
+
+    .winter-hole {
+      --sparkle-color: #60a5fa; /* 雪クリスタルブルー */
+      --sparkle-color-light: rgba(96, 165, 250, 0.3);
+      --pulse-ripple-color: rgba(147, 197, 253, 0.85);
+    }
+    .winter-hole::after {
+      border-color: #93c5fd;
+    }
+
+    /* 穴が波打つ（ブルンと躍動する）アニメーション */
+    @keyframes holeWobble {
+      0% { transform: scale(1); }
+      15% { transform: scale(1.08, 0.92); }
+      30% { transform: scale(0.92, 1.08) translateY(-4px); }
+      50% { transform: scale(1.05, 0.95) translateY(0); }
+      70% { transform: scale(0.98, 1.02); }
+      100% { transform: scale(1); }
+    }
+    .hole-wobble {
+      animation: holeWobble 0.5s ease-out;
+    }
+
+    /* 出現時用の「ムニュッ」と弾力的に盛り上がるスケールアニメーション */
+    @keyframes soilSquish {
+      0% { transform: scale(1); }
+      15% { transform: scale(1.18, 0.82); } /* 横に「ムニュッ」と潰れる */
+      40% { transform: scale(0.85, 1.18); } /* 縦にビヨーンと伸びる躍動感 */
+      65% { transform: scale(1.05, 0.95); } /* 緩やかなリバウンド */
+      85% { transform: scale(0.98, 1.01); }
+      100% { transform: scale(1); }
+    }
+    .soil-squish {
+      animation: soilSquish 0.65s cubic-bezier(0.25, 0.8, 0.25, 1.4) forwards;
+    }
+
+    /* 土ぼこりのアニメーション */
+    @keyframes dustCloudRise {
+      0% {
+        transform: translate(-50%, 10px) scale(0.2);
+        opacity: 0;
+      }
+      20% {
+        opacity: 0.8;
+      }
+      100% {
+        transform: translate(var(--dx, -50%), var(--dy, -35px)) scale(var(--ds, 1.3));
+        opacity: 0;
+      }
+    }
+    .dust-particle {
+      position: absolute;
+      left: 50%;
+      bottom: 12px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 12;
+      animation: dustCloudRise 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    @keyframes floatSoft {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50% { transform: translateY(-4px) rotate(8deg) scale(1.05); }
     }
 
     /* キャラクターが土から飛び出すためのアニメーション制御 */
@@ -45,14 +339,57 @@
       will-change: transform;
     }
 
-    /* このクラスがつくとキャラクターが顔を出す */
-    .character-wrapper.up {
-      transform: translateY(0%);
+    /* キャラクターの影を穴の中に落とすCSS擬似要素（奥行き感を強化） */
+    .character-wrapper::before {
+      content: '';
+      position: absolute;
+      bottom: 6px;
+      left: 50%;
+      transform: translateX(-50%) scaleX(1);
+      width: 65%;
+      height: 10px;
+      background: rgba(0, 0, 0, 0.65);
+      border-radius: 50%;
+      filter: blur(4px);
+      z-index: 9; /* キャラクター(z-index 10)の下 */
+      pointer-events: none;
+      opacity: 0;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    .character-wrapper.up::before {
+      opacity: 1;
+      transform: translateX(-50%) scaleX(1.15) scaleY(1.05);
     }
 
-    /* タップされたときの縮む演出 */
+    /* かくれんぼ風、待機中の可愛い「ひょっこり」「もじもじ」揺れアニメーション */
+    @keyframes peepWobble {
+      0%, 100% {
+        transform: translateY(0%) scale(1) rotate(0deg);
+      }
+      20% {
+        transform: translateY(-2.5%) scale(1.03, 0.97) rotate(1deg);
+      }
+      40% {
+        transform: translateY(0%) scale(0.97, 1.03) rotate(-1.5deg);
+      }
+      60% {
+        transform: translateY(-1.2%) scale(1.01, 0.99) rotate(1deg);
+      }
+      80% {
+        transform: translateY(0%) scale(1) rotate(-0.5deg);
+      }
+    }
+
+    /* このクラスがつくとキャラクターが顔を出し、かすかに揺れる待機アニメーションを開始 */
+    .character-wrapper.up {
+      transform: translateY(0%);
+      animation: peepWobble 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    /* タップされたときの縮む演出（待機アニメーションを即時に上書き解除） */
     .character-wrapper.tapped {
-      transform: scale(0.55) translateY(25%);
+      animation: none !important;
+      transform: scale(0.55) translateY(25%) !important;
       transition: transform 0.12s ease-out;
     }
 
@@ -159,18 +496,87 @@
       animation: starBurst 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
     }
 
-    /* ふわっと浮き上がる点数アニメーション */
-    @keyframes scoreUp {
+    /* カラフルな紙吹雪、星やハートの極上バーストアニメーション */
+    @keyframes confettiBurst {
       0% {
-        transform: translate(-50%, -50%) scale(0.5);
-        opacity: 0;
+        transform: translate(0, 0) scale(0) rotate(0deg);
+        opacity: 1;
       }
-      50% {
-        transform: translate(-50%, -80px) scale(1.2);
+      35% {
         opacity: 1;
       }
       100% {
-        transform: translate(-50%, -120px) scale(1);
+        transform: translate(var(--tx), var(--ty)) scale(var(--scale-end, 1.25)) rotate(var(--rot));
+        opacity: 0;
+      }
+    }
+    .confetti-particle {
+      position: absolute;
+      pointer-events: none;
+      z-index: 40;
+      animation: confettiBurst var(--duration, 0.8s) cubic-bezier(0.1, 0.85, 0.35, 1.15) forwards;
+    }
+
+    /* 穴の縁（border）が外側へ向かって広がる「パルスエフェクト」 */
+    @keyframes rippleOut {
+      0% {
+        transform: scale(0.95);
+        opacity: 0.95;
+        box-shadow: 0 0 0 2px var(--pulse-ripple-color, rgba(234, 179, 8, 0.85));
+      }
+      100% {
+        transform: scale(1.4);
+        opacity: 0;
+        box-shadow: 0 0 0 24px var(--pulse-ripple-color, rgba(234, 179, 8, 0));
+      }
+    }
+    .hole-pulse {
+      position: absolute;
+      width: calc(100% - 12px);
+      height: calc(100% - 12px);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 6; /* 穴（soil-hole）の背後レイヤー */
+      animation: rippleOut 0.85s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+    @media (min-width: 768px) {
+      .hole-pulse {
+        width: calc(100% - 20px);
+        height: calc(100% - 20px);
+      }
+    }
+
+    /* 土の質感を表現した粒状のパーティクル */
+    @keyframes dirtSplatter {
+      0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--tx), var(--ty)) scale(0.1) rotate(var(--rot));
+        opacity: 0;
+      }
+    }
+    .dirt-particle {
+      position: absolute;
+      pointer-events: none;
+      z-index: 35; /* キャラクター(10)や土(25)よりも手前 */
+      border-radius: 50%;
+      animation: dirtSplatter var(--duration, 0.65s) cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    /* ふわっと浮き上がる点数アニメーション */
+    @keyframes scoreUp {
+      0% {
+        transform: translate(-50%, -50%) scale(0.5) rotate(var(--rot-start, -10deg));
+        opacity: 0;
+      }
+      50% {
+        transform: translate(-50%, -80px) scale(1.2) rotate(var(--rot-mid, 5deg));
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -120px) scale(1) rotate(var(--rot-end, 15deg));
         opacity: 0;
       }
     }
@@ -186,6 +592,9 @@
   </style>
 </head>
 <body class="bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200 min-h-screen flex flex-col justify-between overflow-hidden relative">
+
+  <!-- ゲーム終了時の暖色系やわらかフェードイン用オーバーレイ（やわらかなグラデーションで終了時の唐突感を軽減します） -->
+  <div id="end-game-overlay" class="fixed inset-0 bg-gradient-to-tr from-amber-100/60 via-orange-100/50 to-rose-100/60 pointer-events-none opacity-0 transition-opacity duration-1000 z-40"></div>
 
   <!-- 背景の雲 -->
   <div class="absolute top-10 left-0 w-full overflow-hidden pointer-events-none z-0">
@@ -264,15 +673,48 @@
         </p>
       </div>
 
-      <!-- スタートボタン（背景と違う超目立つ元気な赤オレンジ・ピンク色 ＋ 抜群に見やすいポップな袋文字フォント！） -->
-      <button id="btn-start" class="btn-bouncy w-full max-w-xs py-4 px-6 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 border-b-8 border-red-950 text-white font-black text-2xl md:text-3xl rounded-full shadow-[0_12px_30px_rgba(239,68,68,0.5)] border-4 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none tracking-wider">
-        <span class="block text-yellow-200 text-[11px] md:text-xs font-black tracking-widest mb-1 text-pop-outline-yellow">🎵 おんがくが ながれるよ 🎵</span>
-        <span class="text-pop-outline-red font-extrabold text-3xl md:text-4xl tracking-widest block">すたーと！ 🏁</span>
-      </button>
+      <!-- プレイ履歴エリア (Start Screen) -->
+      <div id="start-history-container" class="w-full bg-white/90 p-2.5 rounded-xl border-2 border-amber-300 shadow-sm hidden">
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-[10px] font-black text-amber-800 flex items-center gap-1">📈 さいきんの プレイきろく (10かい)</span>
+          <button id="btn-clear-history" class="text-[8px] bg-red-100 hover:bg-red-200 text-red-600 font-bold px-1.5 py-0.5 rounded-md transition-colors">きろくをけす</button>
+        </div>
+        <div id="start-history-list" class="max-h-24 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin">
+          <!-- 履歴項目が動的に生成されます -->
+        </div>
+      </div>
+
+      <!-- 難易度選択スタートボタン（やさしい & むずかしい の2種類から選んで直接スタート！） -->
+      <div class="flex flex-col gap-3 w-full max-w-xs">
+        <!-- やさしいボタン -->
+        <button id="btn-start-easy" class="btn-bouncy w-full py-3 px-5 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-500 border-b-8 border-emerald-900 text-white font-black rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.4)] border-4 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none">
+          <span class="block text-yellow-100 text-[10px] md:text-xs font-black tracking-widest mb-0.5 text-pop-outline-yellow">🐢 ゆっくりでてくるよ 🎵</span>
+          <span class="text-pop-outline-green font-black text-2xl md:text-3xl tracking-wider block">🟢 やさしい</span>
+        </button>
+
+        <!-- むずかしいボタン -->
+        <button id="btn-start-hard" class="btn-bouncy w-full py-3 px-5 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 border-b-8 border-red-950 text-white font-black rounded-full shadow-[0_8px_20px_rgba(239,68,68,0.4)] border-4 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none">
+          <span class="block text-yellow-100 text-[10px] md:text-xs font-black tracking-widest mb-0.5 text-pop-outline-yellow">⚡ はやくでてくるよ 🎵</span>
+          <span class="text-pop-outline-red font-black text-2xl md:text-3xl tracking-wider block">🔴 むずかしい</span>
+        </button>
+      </div>
     </div>
 
     <!-- ==================== 2. ゲーム本編画面 ==================== -->
-    <div id="screen-game" class="hidden flex-col justify-between flex-grow">
+    <div id="screen-game" class="hidden flex-col justify-between flex-grow relative">
+      
+      <!-- カウントダウン演出用のオーバーレイ -->
+      <div id="countdown-overlay" class="hidden absolute inset-0 bg-emerald-950/60 backdrop-blur-sm rounded-2xl z-30 flex flex-col items-center justify-center">
+        <div id="countdown-text" class="text-white font-black text-8xl md:text-9xl drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] text-pop-outline-yellow transition-all duration-300">3</div>
+      </div>
+
+      <!-- コンボ表示（コンボ発生時に右からぴょこっと飛び出す） -->
+      <div id="combo-badge" class="absolute right-2 top-20 z-20 hidden pointer-events-none transform transition-all duration-300 scale-0 origin-right">
+        <div class="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 text-white font-black px-4 py-1.5 rounded-full shadow-lg border-2 border-yellow-200 flex flex-col items-center justify-center leading-none">
+          <span id="combo-text" class="text-xl md:text-2xl text-pop-outline-yellow tracking-wider">3 こんぼ！🔥</span>
+          <span id="combo-multiplier" class="text-[9px] font-bold text-yellow-100 mt-0.5 font-sans">スコア 1.2ばい！⚡</span>
+        </div>
+      </div>
       
       <!-- ヘッダー情報（制限時間、スコア） -->
       <div class="bg-white/80 border-4 border-emerald-400 rounded-2xl p-2 flex justify-between items-center shadow-md">
@@ -309,52 +751,70 @@
         </div>
       </div>
 
-      <!-- 畑のゲーム盤面（3列 × 3行 = 9つの大きな穴） -->
-      <div class="grid grid-cols-3 gap-x-3 gap-y-3 my-auto py-2">
+      <!-- 畑のゲーム盤面（3列 × 3行 = 9つの大きな穴：スマホ向けにレスポンシブ調整、タップ領域も広く！） -->
+      <div class="grid grid-cols-3 gap-1 sm:gap-2 md:gap-3.5 my-auto py-2 w-full max-w-[420px] mx-auto px-1">
         
         <!-- 穴 0 -->
-        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="0">
-          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        <div class="hole-container aspect-square w-full flex items-center justify-center p-1.5 md:p-2.5" data-hole="0">
+          <div class="soil-hole flex items-center justify-center overflow-hidden border-t-4 border-amber-950">
+            <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+          </div>
         </div>
 
         <!-- 穴 1 -->
-        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="1">
-          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        <div class="hole-container aspect-square w-full flex items-center justify-center p-1.5 md:p-2.5" data-hole="1">
+          <div class="soil-hole flex items-center justify-center overflow-hidden border-t-4 border-amber-950">
+            <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+          </div>
         </div>
 
         <!-- 穴 2 -->
-        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="2">
-          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        <div class="hole-container aspect-square w-full flex items-center justify-center p-1.5 md:p-2.5" data-hole="2">
+          <div class="soil-hole flex items-center justify-center overflow-hidden border-t-4 border-amber-950">
+            <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+          </div>
         </div>
 
         <!-- 穴 3 -->
-        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="3">
-          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        <div class="hole-container aspect-square w-full flex items-center justify-center p-1.5 md:p-2.5" data-hole="3">
+          <div class="soil-hole flex items-center justify-center overflow-hidden border-t-4 border-amber-950">
+            <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+          </div>
         </div>
 
         <!-- 穴 4 -->
-        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="4">
-          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        <div class="hole-container aspect-square w-full flex items-center justify-center p-1.5 md:p-2.5" data-hole="4">
+          <div class="soil-hole flex items-center justify-center overflow-hidden border-t-4 border-amber-950">
+            <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+          </div>
         </div>
 
         <!-- 穴 5 -->
-        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="5">
-          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        <div class="hole-container aspect-square w-full flex items-center justify-center p-1.5 md:p-2.5" data-hole="5">
+          <div class="soil-hole flex items-center justify-center overflow-hidden border-t-4 border-amber-950">
+            <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+          </div>
         </div>
 
         <!-- 穴 6 -->
-        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="6">
-          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        <div class="hole-container aspect-square w-full flex items-center justify-center p-1.5 md:p-2.5" data-hole="6">
+          <div class="soil-hole flex items-center justify-center overflow-hidden border-t-4 border-amber-950">
+            <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+          </div>
         </div>
 
         <!-- 穴 7 -->
-        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="7">
-          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        <div class="hole-container aspect-square w-full flex items-center justify-center p-1.5 md:p-2.5" data-hole="7">
+          <div class="soil-hole flex items-center justify-center overflow-hidden border-t-4 border-amber-950">
+            <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+          </div>
         </div>
 
         <!-- 穴 8 -->
-        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="8">
-          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        <div class="hole-container aspect-square w-full flex items-center justify-center p-1.5 md:p-2.5" data-hole="8">
+          <div class="soil-hole flex items-center justify-center overflow-hidden border-t-4 border-amber-950">
+            <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+          </div>
         </div>
 
       </div>
@@ -377,7 +837,15 @@
       </div>
 
       <!-- スコアとメダル表示 -->
-      <div class="bg-white/95 rounded-2xl p-5 shadow-lg border-4 border-yellow-300 w-full max-w-sm my-3">
+      <div class="bg-white/95 rounded-2xl p-5 shadow-lg border-4 border-yellow-300 w-full max-w-sm my-3 relative overflow-hidden">
+        
+        <!-- 新記録スタンプ（新記録達成時にダイナミックにスタンプされる演出用） -->
+        <div id="new-record-stamp" class="absolute -right-4 -top-3 w-24 h-24 bg-gradient-to-br from-red-500 to-rose-600 border-4 border-yellow-300 text-white font-extrabold flex flex-col items-center justify-center rounded-full shadow-lg z-20 pointer-events-none transform rotate-12 scale-0 opacity-0 transition-all duration-500">
+          <span class="text-[10px] tracking-widest text-yellow-200 animate-pulse">BEST!</span>
+          <span class="text-base font-black text-pop-outline-red">しんきろく</span>
+          <span class="text-[8px] text-yellow-100">おめでとう！</span>
+        </div>
+
         <div id="result-medal" class="text-6xl mb-1 filter drop-shadow">🥇</div>
         
         <p class="text-gray-500 font-bold text-xs">あなたの てんすう</p>
@@ -389,6 +857,14 @@
         <!-- ほめ言葉メッセージ -->
         <div id="result-message" class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-100 leading-relaxed">
           グッドウェイしちょうも<br>おおいそぎで かんしゃ しているよ！
+        </div>
+      </div>
+
+      <!-- プレイ履歴エリア (Result Screen) -->
+      <div id="result-history-container" class="w-full max-w-sm bg-white/90 p-2.5 rounded-xl border-2 border-yellow-300 shadow-sm mb-3 hidden">
+        <span class="text-xs font-black text-amber-800 flex items-center gap-1 mb-1">📈 さいきんの プレイきろく (10かい)</span>
+        <div id="result-history-list" class="max-h-24 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin">
+          <!-- 履歴項目が動的に生成されます -->
         </div>
       </div>
 
@@ -562,14 +1038,22 @@
     let currentSeasonKey = 'summer'; // デフォルト季節
 
     // ゲーム状態
-    const GAME_DURATION = 30; // 制限時間
+    let gameDuration = 30; // 制限時間（難易度で変化）
     let score = 0;
-    let timeLeft = GAME_DURATION;
+    let timeLeft = gameDuration;
     let isPlaying = false;
     let timerInterval = null;
+    let countdownInterval = null;
     let spawnTimeout = null;
     let activeHoles = Array(9).fill(null); // 9つの穴
     let decorationInterval = null; // 季節エフェクト
+    let currentDifficulty = 'easy'; // 'easy' または 'hard'
+
+    // コンボシステム変数
+    let comboCount = 0;
+    let lastTapTime = 0;
+    const COMBO_WINDOW = 2500; // 2.5秒
+    let comboTimeout = null;
 
     // 音声
     let audioCtx = null;
@@ -582,7 +1066,8 @@
     const screenGame = document.getElementById('screen-game');
     const screenResult = document.getElementById('screen-result');
     
-    const btnStart = document.getElementById('btn-start');
+    const btnStartEasy = document.getElementById('btn-start-easy');
+    const btnStartHard = document.getElementById('btn-start-hard');
     const btnRestart = document.getElementById('btn-restart');
     const btnToTitle = document.getElementById('btn-to-title');
     const btnToggleSound = document.getElementById('btn-toggle-sound');
@@ -605,7 +1090,7 @@
     const resultMedal = document.getElementById('result-medal');
     const resultMessage = document.getElementById('result-message');
     
-    const holes = document.querySelectorAll('.soil-hole');
+    const holes = document.querySelectorAll('.hole-container');
     const fallingContainer = document.getElementById('falling-container');
     const bestScoreText = document.getElementById('best-score-text');
     let bestScore = 0;
@@ -784,6 +1269,57 @@
       }
     }
 
+    // 穴そのものへのインタラクション（波打ちアニメーション ＋ 土ぼこりエフェクト）
+    function triggerHoleInteraction(hole) {
+      if (!hole) return;
+      
+      // 1. ブルンと波打つ/揺れるアニメーションを適用
+      hole.classList.remove('hole-wobble');
+      // 強制リフローによってアニメーションを再トリガー
+      void hole.offsetWidth;
+      hole.classList.add('hole-wobble');
+      
+      // 1.5 穴そのもの（.soil-hole）に「ムニュッ」と盛り上がる弾力スケールアニメーションを適用！
+      const soilHole = hole.querySelector('.soil-hole');
+      if (soilHole) {
+        soilHole.classList.remove('soil-squish');
+        void soilHole.offsetWidth; // 強制リフロー
+        soilHole.classList.add('soil-squish');
+      }
+      
+      // 2. 小さな土ぼこり（砂煙/雪煙）を舞い上がらせる
+      const isWinter = hole.classList.contains('winter-hole');
+      // 冬なら白や薄い青の雪ぼこり、それ以外の季節は茶色や黄金色の土ぼこり
+      const dustColors = isWinter 
+        ? ['bg-blue-100/90', 'bg-white/95', 'bg-sky-200/80', 'bg-blue-50/70'] 
+        : ['bg-amber-800/80', 'bg-yellow-800/70', 'bg-amber-600/75', 'bg-yellow-700/60', 'bg-amber-700/65'];
+        
+      for (let i = 0; i < 6; i++) {
+        const p = document.createElement('div');
+        const size = 6 + Math.random() * 9; // 6px 〜 15px
+        p.className = `dust-particle ${dustColors[Math.floor(Math.random() * dustColors.length)]}`;
+        p.style.width = `${size}px`;
+        p.style.height = `${size}px`;
+        
+        // ランダムな方向へ吹き出す
+        const dx = -50 + (Math.random() - 0.5) * 60; // 左右方向のランダムな飛び散り
+        const dy = -20 - Math.random() * 30;         // 上方向への上昇量
+        const ds = 0.8 + Math.random() * 0.7;        // 拡大率
+        
+        p.style.setProperty('--dx', `${dx}px`);
+        p.style.setProperty('--dy', `${dy}px`);
+        p.style.setProperty('--ds', `${ds}`);
+        
+        // 微少なばらつき（ディレイ）
+        p.style.animationDelay = `${Math.random() * 0.1}s`;
+        
+        hole.appendChild(p);
+        
+        // アニメーション完了後にDOMからきれいに削除
+        setTimeout(() => p.remove(), 750);
+      }
+    }
+
     function initAudio() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -824,6 +1360,30 @@
       playSound(523.25, 'triangle', 0.1, 0.08, 0.3); // ド
       playSound(659.25, 'triangle', 0.1, 0.16, 0.3); // ミ
       playSound(783.99, 'sine', 0.3, 0.24, 0.3); // ソ（高）
+    }
+
+    function playSoundCountdownTick() {
+      initAudio();
+      playSound(440.00, 'triangle', 0.12, 0, 0.2); // ラ
+    }
+
+    // 3、2、1の後の「スタート！」用の華やかな音
+    function playSoundCountdownStart() {
+      initAudio();
+      playSound(523.25, 'triangle', 0.12, 0, 0.35); // ド
+      playSound(659.25, 'triangle', 0.12, 0.08, 0.35); // ミ
+      playSound(783.99, 'triangle', 0.15, 0.16, 0.35); // ソ
+      playSound(1046.50, 'sine', 0.35, 0.24, 0.6); // 高いド（華やかに）
+    }
+
+    // 新記録達成時のファンファーレ！
+    function playHighScoreFanfare() {
+      initAudio();
+      playSound(523.25, 'triangle', 0.15, 0, 0.3); // C5
+      playSound(659.25, 'triangle', 0.15, 0.08, 0.3); // E5
+      playSound(783.99, 'triangle', 0.15, 0.16, 0.3); // G5
+      playSound(1046.50, 'sine', 0.4, 0.24, 0.8); // C6
+      playSound(1318.51, 'sine', 0.5, 0.35, 1.2); // E6!
     }
 
     function playSoundTap(freq) {
@@ -938,6 +1498,46 @@
 
       document.body.className = `bg-gradient-to-b ${season.bgGradient} min-h-screen flex flex-col justify-between overflow-hidden relative`;
       
+      // 9つの穴のふちに、季節ごとのCSS装飾（ドット縁）や絵文字（草花・雪など）を追加
+      if (holes && holes.length > 0) {
+        holes.forEach(hole => {
+          // 既存の季節クラスを削除し、新しいものを追加してCSSのドットカラーを切り替え
+          hole.classList.remove('spring-hole', 'summer-hole', 'autumn-hole', 'winter-hole');
+          hole.classList.add(`${seasonKey}-hole`);
+
+          // すでに配置されているデコレーション絵文字をクリア
+          const oldDecos = hole.querySelectorAll('.hole-deco-emoji');
+          oldDecos.forEach(d => d.remove());
+
+          // 季節にぴったりのデコレーション絵文字
+          let decoEmojis = [];
+          if (seasonKey === 'spring') {
+            decoEmojis = ['🌸', '🌱'];
+          } else if (seasonKey === 'summer') {
+            decoEmojis = ['🌻', '🌿'];
+          } else if (seasonKey === 'autumn') {
+            decoEmojis = ['🍁', '🍄'];
+          } else if (seasonKey === 'winter') {
+            decoEmojis = ['❄️', '⭐'];
+          }
+
+          if (decoEmojis.length >= 2) {
+            // 左上デコ（キラキラふわふわ光る）
+            const deco1 = document.createElement('div');
+            deco1.className = 'hole-deco-emoji absolute -top-1.5 -left-1 text-sm md:text-base select-none pointer-events-none z-20 animate-pulse';
+            deco1.textContent = decoEmojis[0];
+            hole.appendChild(deco1);
+
+            // 右下デコ（のどかに揺れる）
+            const deco2 = document.createElement('div');
+            deco2.className = 'hole-deco-emoji absolute -bottom-1.5 -right-1 text-sm md:text-base select-none pointer-events-none z-20';
+            deco2.textContent = decoEmojis[1];
+            deco2.style.animation = 'floatSoft 3s ease-in-out infinite';
+            hole.appendChild(deco2);
+          }
+        });
+      }
+
       initAudio();
       playSound(659.25, 'sine', 0.08, 0, 0.15);
       playSound(783.99, 'sine', 0.12, 0.04, 0.15);
@@ -1008,9 +1608,15 @@
 
       const currentActiveCount = activeHoles.filter(x => x !== null).length;
       
-      let maxActive = 2;
-      if (timeLeft < 15) {
+      let maxActive = 3; // やさしいでも少し被るように最大3匹に増量 (formerly 2)
+      if (currentDifficulty === 'easy') {
         maxActive = 3;
+      } else {
+        // むずかしい：さらに被ってスリリングに！最大4〜5匹
+        maxActive = 4;
+        if (timeLeft < 12) {
+          maxActive = 5;
+        }
       }
       
       if (currentActiveCount < maxActive) {
@@ -1044,11 +1650,22 @@
         }
       }
 
-      let nextDelay = 1000;
-      if (timeLeft < 10) {
-        nextDelay = 650;
-      } else if (timeLeft < 20) {
-        nextDelay = 850;
+      let nextDelay = 800;
+      if (currentDifficulty === 'easy') {
+        nextDelay = 1000; // やさしい：はじめは1.0秒おき (formerly 1.4秒)
+        if (timeLeft < 15) {
+          nextDelay = 700; // ラスト15秒は0.7秒おき (formerly 1.0秒)
+        } else if (timeLeft < 30) {
+          nextDelay = 850; // 中盤は0.85秒おき (formerly 1.2秒)
+        }
+      } else {
+        // むずかしい：被りまくり！
+        nextDelay = 500; // むずかしい：はじめは0.5秒おき (formerly 0.75秒)
+        if (timeLeft < 7) {
+          nextDelay = 300; // ラスト7秒は0.3秒おき (formerly 0.45秒)
+        } else if (timeLeft < 14) {
+          nextDelay = 400; // 中盤は0.4秒おき (formerly 0.6秒)
+        }
       }
 
       spawnTimeout = setTimeout(spawnLoop, nextDelay);
@@ -1080,7 +1697,7 @@
         wrapper.innerHTML = `
           <div class="relative w-full h-full flex flex-col justify-end items-center">
             <!-- 自動透過処理をonloadで適用するため、市松模様などが完全に消え去り背景に完全に馴染みます -->
-            <img src="${char.imgUrl}" alt="${char.name}" class="w-full h-auto max-h-[86%] object-contain select-none pointer-events-none drop-shadow-md hidden" 
+            <img src="${char.imgUrl}" alt="${char.name}" class="w-[82%] h-[82%] object-contain select-none pointer-events-none drop-shadow-md hidden" 
                  referrerPolicy="no-referrer"
                  onload="processAndCleanImage(this); this.classList.remove('hidden'); const fallback = this.parentNode.querySelector('.fallback-emoji-wrapper'); if(fallback) fallback.style.display='none';"
                  onerror="this.style.display='none'; const fallback = this.parentNode.querySelector('.fallback-emoji-wrapper'); if(fallback) fallback.style.display='block';">
@@ -1100,17 +1717,35 @@
 
       requestAnimationFrame(() => {
         wrapper.classList.add('up');
+        triggerHoleInteraction(hole);
+        triggerHolePulse(hole);
       });
 
       let stayDuration = 2400;
-      if (timeLeft < 10) {
-        stayDuration = 1600;
-      } else if (timeLeft < 20) {
-        stayDuration = 1900;
+      if (currentDifficulty === 'easy') {
+        stayDuration = 3200; // やさしい：はじめは3.2秒とどまる
+        if (timeLeft < 15) {
+          stayDuration = 2400; // 終盤は2.4秒
+        } else if (timeLeft < 30) {
+          stayDuration = 2800; // 中盤は2.8秒
+        }
+      } else {
+        // むずかしい
+        stayDuration = 1600; // むずかしい：はじめは1.6秒とどまる
+        if (timeLeft < 7) {
+          stayDuration = 1000; // 終盤は1.0秒
+        } else if (timeLeft < 14) {
+          stayDuration = 1300; // 中盤は1.3秒
+        }
       }
 
       const hideTimeout = setTimeout(() => {
         if (activeHoles[holeIndex] === char) {
+          // 得点が入るキャラをタップせず見逃した（自然に引っ込んだ）場合はコンボ終了！
+          if (!char.isObstacle && comboCount > 0) {
+            comboCount = 0;
+            updateComboUI();
+          }
           hideCharacter(holeIndex);
         }
       }, stayDuration);
@@ -1124,6 +1759,9 @@
       
       wrapper.classList.remove('up');
       activeHoles[holeIndex] = null;
+
+      // 自然に引っ込むときも土ぼこり＆少しの波打ちを発生させる
+      triggerHoleInteraction(hole);
 
       setTimeout(() => {
         if (!wrapper.classList.contains('up')) {
@@ -1147,26 +1785,53 @@
 
       activeHoles[holeIndex] = null;
 
+      // タップ時も土ぼこり＆波打ちアニメーションをトリガー！
+      triggerHoleInteraction(hole);
+
       if (wrapper.dataset.timeoutId) {
         clearTimeout(parseInt(wrapper.dataset.timeoutId));
       }
 
-      score += char.point;
+      const isChickaletta = char.id === 'chickaletta';
+      let pointsEarned = char.point;
+      let multiplier = 1.0;
+
+      if (char.isObstacle) {
+        // お邪魔キャラ（ライバール市長）をタップしたらコンボはリセット
+        comboCount = 0;
+        updateComboUI();
+        playSoundMiss();
+      } else {
+        // 得点が入るキャラをタップしたらコンボ継続！
+        comboCount++;
+
+        // 倍率計算
+        if (comboCount >= 8) {
+          multiplier = 2.0;
+        } else if (comboCount >= 5) {
+          multiplier = 1.5;
+        } else if (comboCount >= 3) {
+          multiplier = 1.2;
+        }
+
+        pointsEarned = Math.round(char.point * multiplier);
+
+        updateComboUI(multiplier);
+
+        if (isChickaletta) {
+          playSoundChickaletta();
+          triggerSpecialChickalettaEffect();
+        } else {
+          // コンボ数に応じて少し音程が上がるお茶目なタップ音！
+          playSoundTap(char.soundFreq + (comboCount * 12));
+        }
+      }
+
+      score += pointsEarned;
       if (score < 0) {
         score = 0;
       }
       scoreText.textContent = score;
-
-      const isChickaletta = char.id === 'chickaletta';
-
-      if (char.isObstacle) {
-        playSoundMiss();
-      } else if (isChickaletta) {
-        playSoundChickaletta();
-        triggerSpecialChickalettaEffect();
-      } else {
-        playSoundTap(char.soundFreq);
-      }
 
       if (navigator.vibrate) {
         if (char.isObstacle) {
@@ -1181,7 +1846,8 @@
       wrapper.classList.add('tapped');
 
       createSparkles(e, hole, char.isObstacle, isChickaletta);
-      createFloatingText(char.point, char.emoji, hole, char.isObstacle, isChickaletta);
+      createDirtSplash(e, hole); // キャラクターをタップして消える際、土粒のパーティクルが飛び散る
+      createFloatingText(pointsEarned, char.emoji, hole, char.isObstacle, isChickaletta);
 
       setTimeout(() => {
         wrapper.classList.remove('up');
@@ -1206,6 +1872,41 @@
         setTimeout(() => {
           gameContainer.classList.remove('animate-shake');
         }, 500);
+      }
+    }
+
+    // 新記録（しんきろく）達成時の華やかなパーティクル・紙吹雪エフェクト！
+    function spawnNewRecordConfetti() {
+      const container = document.body;
+      const confettiEmojis = ['🎉', '✨', '🎈', '👑', '💖', '⭐', '🌈', '🎊', '🎀', '🍭'];
+      
+      for (let i = 0; i < 40; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.className = 'absolute text-2xl md:text-3xl select-none pointer-events-none z-50';
+          confetti.textContent = confettiEmojis[Math.floor(Math.random() * confettiEmojis.length)];
+          
+          // ランダムな横位置から落とす
+          confetti.style.left = `${Math.random() * 90 + 5}%`;
+          confetti.style.top = `-30px`;
+          confetti.style.position = 'fixed';
+          confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+          
+          container.appendChild(confetti);
+          
+          const duration = 2000 + Math.random() * 2500; // 2秒〜4.5秒
+          const drift = (Math.random() - 0.5) * 120; // 左右の揺れ幅
+          
+          const anim = confetti.animate([
+            { top: '-30px', transform: `rotate(0deg) translateX(0)` },
+            { top: '105vh', transform: `rotate(${360 + Math.random() * 360}deg) translateX(${drift}px)` }
+          ], {
+            duration: duration,
+            easing: 'ease-out'
+          });
+          
+          anim.onfinish = () => confetti.remove();
+        }, i * 60); // 段階的にポップ
       }
     }
 
@@ -1270,10 +1971,229 @@
           particle.remove();
         }, isChickaletta ? 800 : 600); // チカレッタは余韻を長めに
       }
+
+      // 【要件①】キャラクターをタップした時、穴から紙吹雪のようなカラフルな星やハートが飛び出すCSSアニメーションをさらに爆発放出！
+      if (!isObstacle) {
+        const confettiCount = isChickaletta ? 24 : 14;
+        const confettiIcons = ['⭐', '🌟', '✨', '💖', '💝', '❤️', '💙', '💛', '💚', '💜', '🌈', '🎀', '🎉', '🍀'];
+        
+        for (let i = 0; i < confettiCount; i++) {
+          const cp = document.createElement('div');
+          cp.className = 'confetti-particle text-lg md:text-xl filter drop-shadow-md';
+          cp.textContent = confettiIcons[Math.floor(Math.random() * confettiIcons.length)];
+          
+          // タップ座標を起点にする
+          cp.style.left = `${relativeX - 10}px`;
+          cp.style.top = `${relativeY - 10}px`;
+          
+          const angle = (i * (360 / confettiCount) + Math.random() * 45) * (Math.PI / 180);
+          const distance = (isChickaletta ? 100 : 75) + Math.random() * (isChickaletta ? 110 : 75);
+          
+          const tx = Math.cos(angle) * distance;
+          // 上方向への躍動感・浮遊感を強めるため、y方向を少し上にオフセット
+          const ty = Math.sin(angle) * distance - 35;
+          const rot = -360 + Math.random() * 720;
+          const duration = 0.65 + Math.random() * 0.55; // 0.65秒 〜 1.2秒
+          const scaleEnd = 0.55 + Math.random() * 0.85;
+          
+          cp.style.setProperty('--tx', `${tx}px`);
+          cp.style.setProperty('--ty', `${ty}px`);
+          cp.style.setProperty('--rot', `${rot}deg`);
+          cp.style.setProperty('--duration', `${duration}s`);
+          cp.style.setProperty('--scale-end', `${scaleEnd}`);
+          
+          // 色相をランダムに変えて、1つの絵文字でもより鮮やかで虹色のバリエーションに見えるようにする
+          cp.style.filter = `hue-rotate(${Math.floor(Math.random() * 360)}deg) drop-shadow(0 2px 5px rgba(0,0,0,0.2))`;
+          
+          containerElement.appendChild(cp);
+          
+          setTimeout(() => {
+            cp.remove();
+          }, duration * 1000);
+        }
+      }
+    }
+
+    // 穴の縁が外側へ向かって波紋のように広がる「パルスエフェクト」をトリガーする関数
+    function triggerHolePulse(hole) {
+      if (!hole) return;
+      const pulse = document.createElement('div');
+      pulse.className = 'hole-pulse';
+      hole.appendChild(pulse);
+      setTimeout(() => {
+        pulse.remove();
+      }, 1000);
+    }
+
+    // タップされた際に、土の質感を表現した粒状のパーティクルを穴から飛び散らせる関数
+    function createDirtSplash(event, containerElement) {
+      if (!containerElement) return;
+      
+      let clientX, clientY;
+      if (event && event.touches && event.touches.length > 0) {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+      } else if (event && event.clientX !== undefined) {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      } else {
+        // フォールバック
+        const rect = containerElement.getBoundingClientRect();
+        clientX = rect.left + rect.width / 2;
+        clientY = rect.top + rect.height / 2;
+      }
+
+      const rect = containerElement.getBoundingClientRect();
+      const relativeX = clientX - rect.left;
+      const relativeY = clientY - rect.top;
+
+      const isWinter = containerElement.classList.contains('winter-hole') || (typeof currentSeasonKey !== 'undefined' && currentSeasonKey === 'winter');
+      const dirtColors = isWinter 
+        ? ['#ffffff', '#cbd5e1', '#93c5fd', '#3b82f6', '#f1f5f9'] 
+        : ['#4a2f0f', '#351a02', '#5c4033', '#c2410c', '#eab308', '#854d0e', '#78350f'];
+
+      const count = 12 + Math.floor(Math.random() * 8); // 12〜19個の粒
+      
+      for (let i = 0; i < count; i++) {
+        const dp = document.createElement('div');
+        dp.className = 'dirt-particle shadow-sm';
+        
+        // ランダムなサイズ
+        const size = 3 + Math.random() * 6; // 3px 〜 9px
+        dp.style.width = `${size}px`;
+        dp.style.height = `${size}px`;
+        
+        // 土の色
+        dp.style.backgroundColor = dirtColors[Math.floor(Math.random() * dirtColors.length)];
+        
+        // 形状を少し不規則にしてリアルな土の粒を演出
+        const radiusPatterns = ['20% 50% 30% 70%', '40% 60% 50% 50%', '50% 30% 70% 30%', '30% 30% 30% 30%'];
+        dp.style.borderRadius = radiusPatterns[Math.floor(Math.random() * radiusPatterns.length)];
+        
+        // 出現位置
+        dp.style.left = `${relativeX - size/2}px`;
+        dp.style.top = `${relativeY - size/2}px`;
+        
+        // 放射状のランダムベクトル
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 30 + Math.random() * 45;
+        const tx = Math.cos(angle) * distance;
+        // 重力っぽく下へ落とすため、y軸方向へのオフセット（＋25px）
+        const ty = Math.sin(angle) * distance + 25; 
+        const rot = -180 + Math.random() * 360;
+        const duration = 0.45 + Math.random() * 0.35; // 0.45秒 〜 0.8秒
+        
+        dp.style.setProperty('--tx', `${tx}px`);
+        dp.style.setProperty('--ty', `${ty}px`);
+        dp.style.setProperty('--rot', `${rot}deg`);
+        dp.style.setProperty('--duration', `${duration}s`);
+        
+        containerElement.appendChild(dp);
+        
+        setTimeout(() => {
+          dp.remove();
+        }, duration * 1000);
+      }
+    }
+
+    // プレイ履歴をローカルストレージに保存する関数（最大10回分）
+    function savePlayRecord(score, difficulty) {
+      try {
+        const historyJson = localStorage.getItem('pawpat_helper_history') || '[]';
+        let history = JSON.parse(historyJson);
+        if (!Array.isArray(history)) history = [];
+        
+        // 現在の月日 時:分
+        const now = new Date();
+        const timeStr = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        
+        // メダル
+        let medal = '🥉';
+        if (score >= 80) medal = '👑';
+        else if (score >= 60) medal = '🥇';
+        else if (score >= 40) medal = '🥈';
+        
+        const record = {
+          score: score,
+          difficulty: difficulty === 'easy' ? 'やさしい' : 'むずかしい',
+          time: timeStr,
+          medal: medal
+        };
+        
+        history.unshift(record); // 最新を先頭に追加
+        if (history.length > 10) {
+          history = history.slice(0, 10);
+        }
+        
+        localStorage.setItem('pawpat_helper_history', JSON.stringify(history));
+        updateHistoryUI();
+      } catch (e) {
+        console.error("プレイ履歴の保存に失敗しました:", e);
+      }
+    }
+
+    // プレイ履歴のUI表示を更新する関数
+    function updateHistoryUI() {
+      try {
+        const historyJson = localStorage.getItem('pawpat_helper_history') || '[]';
+        const history = JSON.parse(historyJson);
+        
+        const startContainer = document.getElementById('start-history-container');
+        const startList = document.getElementById('start-history-list');
+        const resultContainer = document.getElementById('result-history-container');
+        const resultList = document.getElementById('result-history-list');
+        
+        if (history.length === 0) {
+          if (startContainer) startContainer.classList.add('hidden');
+          if (resultContainer) resultContainer.classList.add('hidden');
+          return;
+        }
+        
+        if (startContainer) startContainer.classList.remove('hidden');
+        if (resultContainer) resultContainer.classList.remove('hidden');
+        
+        const renderList = (listElement) => {
+          if (!listElement) return;
+          listElement.innerHTML = '';
+          history.forEach((record, idx) => {
+            const item = document.createElement('div');
+            const isLatest = idx === 0;
+            item.className = `flex items-center justify-between text-[10px] p-1 rounded-md transition-all ${isLatest ? 'bg-amber-100 font-bold border border-amber-300 shadow-sm' : 'bg-gray-50 border border-gray-100 text-gray-600'}`;
+            
+            const diffColor = record.difficulty === 'やさしい' ? 'text-emerald-600' : 'text-red-500';
+            
+            item.innerHTML = `
+              <div class="flex items-center space-x-1.5">
+                <span class="text-xs">${record.medal}</span>
+                <span class="font-extrabold ${isLatest ? 'text-orange-600 text-[11px]' : 'text-gray-800'}">${record.score} てん</span>
+                <span class="${diffColor} text-[8px] font-black">(${record.difficulty})</span>
+              </div>
+              <div class="flex items-center space-x-1.5">
+                ${isLatest ? '<span class="bg-red-500 text-white text-[7px] font-bold px-1 rounded-full animate-pulse scale-90">NEW</span>' : ''}
+                <span class="text-[8px] text-gray-400 font-sans">${record.time}</span>
+              </div>
+            `;
+            listElement.appendChild(item);
+          });
+        };
+        
+        renderList(startList);
+        renderList(resultList);
+      } catch (e) {
+        console.error("プレイ履歴UIの更新に失敗しました:", e);
+      }
     }
 
     function createFloatingText(points, emoji, containerElement, isObstacle, isChickaletta) {
       const floatDiv = document.createElement('div');
+      
+      // 浮き上がり時の楽しげな回転アニメーション用の角度をランダム設定
+      const rotStart = Math.floor(Math.random() * 24 - 12); // -12度〜12度
+      const rotMid = rotStart + Math.floor(Math.random() * 16 - 8);
+      const rotEnd = rotMid + Math.floor(Math.random() * 24 - 12);
+      floatDiv.style.setProperty('--rot-start', `${rotStart}deg`);
+      floatDiv.style.setProperty('--rot-mid', `${rotMid}deg`);
+      floatDiv.style.setProperty('--rot-end', `${rotEnd}deg`);
       
       if (isObstacle) {
         const encouragementWord = 'あれれ！';
@@ -1309,6 +2229,39 @@
       }, isChickaletta ? 1200 : 800); // チカレッタは少し長めに表示
     }
 
+    function updateComboUI(multiplier = 1.0) {
+      const badge = document.getElementById('combo-badge');
+      const text = document.getElementById('combo-text');
+      const multText = document.getElementById('combo-multiplier');
+      if (!badge) return;
+
+      if (comboCount >= 2) {
+        if (text) text.textContent = `${comboCount} こんぼ！🔥`;
+        if (multText) multText.textContent = `スコア ${multiplier.toFixed(1)}ばい！⚡`;
+        
+        badge.classList.remove('hidden', 'scale-0');
+        badge.classList.add('flex', 'scale-100');
+        
+        // ポップ＆揺れアニメーション
+        badge.animate([
+          { transform: 'scale(1) rotate(0deg)' },
+          { transform: 'scale(1.2) rotate(6deg)' },
+          { transform: 'scale(1) rotate(0deg)' }
+        ], {
+          duration: 250,
+          easing: 'ease-out'
+        });
+      } else {
+        badge.classList.remove('scale-100');
+        badge.classList.add('scale-0');
+        setTimeout(() => {
+          if (comboCount < 2) {
+            badge.classList.add('hidden');
+          }
+        }, 300);
+      }
+    }
+
     function toggleSound() {
       isSoundMuted = !isSoundMuted;
       btnToggleSound.textContent = isSoundMuted ? '🔇' : '🔊';
@@ -1328,12 +2281,43 @@
       }
     }
 
-    function startGame() {
-      isPlaying = true;
+    function startGame(difficultyMode = 'easy') {
+      currentDifficulty = difficultyMode;
+      if (currentDifficulty === 'easy') {
+        gameDuration = 45; // やさしい：45秒
+      } else {
+        gameDuration = 20; // むずかしい：20秒
+      }
+
+      // すべての進行中タイマーやカウントダウンをいったん停止・クリア
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      if (spawnTimeout) {
+        clearTimeout(spawnTimeout);
+        spawnTimeout = null;
+      }
+      if (comboTimeout) {
+        clearTimeout(comboTimeout);
+        comboTimeout = null;
+      }
+
+      isPlaying = false; // カウントダウン中はタップ無効
       score = 0;
-      timeLeft = GAME_DURATION;
+      timeLeft = gameDuration;
       if (scoreText) scoreText.textContent = '0';
       
+      // コンボを初期状態に
+      comboCount = 0;
+      lastTapTime = 0;
+      updateComboUI();
+      
+      // 穴をすべてクリア
       activeHoles.fill(null);
       holes.forEach(hole => {
         const wrapper = hole.querySelector('.character-wrapper');
@@ -1347,12 +2331,75 @@
         }
       });
 
-      initAudio();
-      playSoundStart();
-      startBGM();
+      // 画面をゲーム画面に切り替え（カウントダウンを見せるため）
       showScreen(screenGame);
-      startTimer();
-      spawnLoop();
+      updateTimerUI();
+
+      // オーディオ初期化
+      initAudio();
+
+      // カウントダウン表示の開始
+      const overlay = document.getElementById('countdown-overlay');
+      const text = document.getElementById('countdown-text');
+      
+      if (overlay && text) {
+        overlay.classList.remove('hidden');
+        overlay.classList.add('flex');
+        
+        let count = 3;
+        text.textContent = count;
+        text.className = 'text-white font-black text-8xl md:text-9xl drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] text-pop-outline-yellow transition-all duration-300 transform scale-100';
+        
+        playSoundCountdownTick();
+        
+        countdownInterval = setInterval(() => {
+          count--;
+          if (count > 0) {
+            text.textContent = count;
+            playSoundCountdownTick();
+            
+            // ポップアップアニメーション
+            text.animate([
+              { transform: 'scale(1.5)', opacity: 0.3 },
+              { transform: 'scale(1)', opacity: 1 }
+            ], {
+              duration: 300,
+              easing: 'ease-out'
+            });
+          } else if (count === 0) {
+            text.textContent = 'スタート！🏁';
+            playSoundCountdownStart();
+            
+            // 特大ポップアップアニメーション
+            text.animate([
+              { transform: 'scale(2)', opacity: 0.2 },
+              { transform: 'scale(1)', opacity: 1 }
+            ], {
+              duration: 350,
+              easing: 'ease-out'
+            });
+          } else {
+            // カウントダウン終了！
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            
+            overlay.classList.add('hidden');
+            overlay.classList.remove('flex');
+            
+            // 本格的にゲーム開始！
+            isPlaying = true;
+            startBGM();
+            startTimer();
+            spawnLoop();
+          }
+        }, 1000);
+      } else {
+        // 万が一DOM要素が見当たらない場合はダイレクトに開始（セーフガード）
+        isPlaying = true;
+        startBGM();
+        startTimer();
+        spawnLoop();
+      }
     }
 
     function startTimer() {
@@ -1376,9 +2423,10 @@
         timerText.textContent = `${timeLeft}びょう`;
       }
       if (timerBar) {
-        const percent = (timeLeft / GAME_DURATION) * 100;
+        const percent = (timeLeft / gameDuration) * 100;
         timerBar.style.width = `${percent}%`;
-        if (timeLeft < 10) {
+        const threshold = currentDifficulty === 'easy' ? 12 : 6;
+        if (timeLeft < threshold) {
           timerBar.className = "bg-gradient-to-r from-red-500 to-orange-500 h-full w-full transition-all duration-1000";
         } else {
           timerBar.className = "bg-gradient-to-r from-emerald-400 to-red-400 h-full w-full transition-all duration-1000";
@@ -1396,6 +2444,10 @@
         clearTimeout(spawnTimeout);
         spawnTimeout = null;
       }
+      if (comboTimeout) {
+        clearTimeout(comboTimeout);
+        comboTimeout = null;
+      }
       stopBGM();
       playSoundTimeup();
 
@@ -1405,8 +2457,11 @@
         }
       });
 
-      if (score > bestScore) {
+      // 新記録の判定（最初のプレイで0点だった場合などは除き、1点以上でベスト更新なら新記録）
+      let isNewRecord = false;
+      if (score > 0 && (score > bestScore || bestScore === 0)) {
         bestScore = score;
+        isNewRecord = true;
         try {
           localStorage.setItem('pawpat_helper_best_score', bestScore);
         } catch (e) {
@@ -1422,8 +2477,52 @@
       }
       setResultEvaluation(score);
 
+      // プレイ記録をローカルストレージに保存＆UI更新
+      savePlayRecord(score, currentDifficulty);
+
+      // ゲーム終了時に画面全体をゆっくり暖色系のやさしい色でフェードインさせる
+      const overlay = document.getElementById('end-game-overlay');
+      if (overlay) {
+        overlay.classList.remove('opacity-0');
+        overlay.classList.add('opacity-100');
+      }
+
       setTimeout(() => {
         showScreen(screenResult);
+        
+        // 新記録スタンプやパーティクル、ファンファーレの演出
+        const stamp = document.getElementById('new-record-stamp');
+        if (isNewRecord) {
+          if (stamp) {
+            stamp.classList.remove('scale-0', 'opacity-0');
+            stamp.classList.add('scale-100', 'opacity-100');
+            // ドン！とスタンプを押すようなポップアニメーション
+            stamp.animate([
+              { transform: 'scale(3) rotate(45deg)', opacity: 0 },
+              { transform: 'scale(1) rotate(12deg)', opacity: 1 }
+            ], {
+              duration: 500,
+              easing: 'ease-out'
+            });
+          }
+          // 華やかな紙吹雪！
+          spawnNewRecordConfetti();
+          // お祝いのファンファーレ
+          playHighScoreFanfare();
+        } else {
+          if (stamp) {
+            stamp.classList.add('scale-0', 'opacity-0');
+            stamp.classList.remove('scale-100', 'opacity-100');
+          }
+        }
+
+        // リザルト画面に遷移してから、オーバーレイをゆっくりとフェードアウトさせる
+        setTimeout(() => {
+          if (overlay) {
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0');
+          }
+        }, 200);
       }, 1200);
     }
 
@@ -1492,10 +2591,11 @@
       });
     }
 
-    btnStart.addEventListener('click', startGame);
+    btnStartEasy.addEventListener('click', () => startGame('easy'));
+    btnStartHard.addEventListener('click', () => startGame('hard'));
     btnRestart.addEventListener('click', () => {
       stopBGM();
-      startGame();
+      startGame(currentDifficulty);
     });
     btnToTitle.addEventListener('click', () => {
       stopBGM();
@@ -1520,6 +2620,25 @@
       }
       if (bestScoreText) {
         bestScoreText.textContent = bestScore;
+      }
+
+      // プレイ履歴の読み込みと表示
+      updateHistoryUI();
+
+      // 履歴クリアボタンのイベント登録
+      const btnClearHistory = document.getElementById('btn-clear-history');
+      if (btnClearHistory) {
+        btnClearHistory.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (confirm('これまでのお手伝いのきろくを すべて けしても よろしいですか？')) {
+            try {
+              localStorage.removeItem('pawpat_helper_history');
+              updateHistoryUI();
+            } catch (err) {
+              console.error("履歴の削除に失敗しました:", err);
+            }
+          }
+        });
       }
 
       // キャラクターリストを初期化
