@@ -1000,8 +1000,8 @@
         id: 'chickaletta',
         name: 'チカレッタ',
         emoji: '🐔🎀', // チカレッタ
-        colorClass: 'bg-orange-100 border-amber-300 text-orange-600',
-        imgUrl: 'assets/chikaletta_mogura.png', /* ★ここにチカレッタの画像URLを入れてね！ */
+        colorClass: 'bg-amber-200 border-amber-500 text-amber-900',
+        imgUrl: 'assets/chikaretta_mogura.png', /* ★ここにチカレッタの画像URLを入れてね！ */
         soundFreq: 1046.50, // 高い ド (C6)
         point: 30, // ボーナス点！
         isObstacle: false
@@ -1166,7 +1166,16 @@
           // すでにほぼ透明なピクセルは背景として通す
           if (a < 50) return true;
           
-          // 1. サンプルした外周の色（確実に背景である市松模様の白やグレー）と一致するかを最優先でチェックします
+          // 1. チカレッタ(白に赤いリボン、黄色い嘴)の体内保護ロジック
+          // にわとり(白色)のチカレッタは、体の中心部分(端から10%以上離れた領域)が白であっても、
+          // 誤って背景とみなされて透過されないように最優先で保護します。
+          if (isChikaletta) {
+            if (x > width * 0.10 && x < width * 0.90 && y > height * 0.10 && y < height * 0.90) {
+              return false;
+            }
+          }
+          
+          // 2. サンプルした外周の色（確実に背景である市松模様 of 白やグレー）と一致するかを最優先でチェックします
           for (let i = 0; i < sampleColors.length; i++) {
             const s = sampleColors[i];
             const dist = Math.abs(r - s.r) + Math.abs(g - s.g) + Math.abs(b - s.b);
@@ -1175,7 +1184,7 @@
             }
           }
           
-          // 2. 一般的な市松模様（白＋薄いグレー）の予備的な判定（念のため）
+          // 3. 一般的な市松模様（白＋薄いグレー）の予備的な判定（念のため）
           const max = Math.max(r, g, b);
           const min = Math.min(r, g, b);
           const diff = max - min;
@@ -1183,17 +1192,6 @@
           if (r > 240 && g > 240 && b > 240) return true;
           // 標準的なグレー（非常に狭い無彩色の範囲。市松模様の濃いグレーや薄いグレーをより広範囲にカバー）
           if (diff < 12 && max > 120 && max < 245) return true;
-
-          // 3. チカレッタ(白に赤いリボン、黄色い嘴)の体内保護ロジック
-          // サンプリングされた確実な背景色や予備市松判定に該当しなかった場合にのみ適用することで、外周の格子背景がチカレッタの周囲に残るのを完璧に防ぎます！
-          if (isChikaletta) {
-            // 中央付近、かつ白・黄色系なら絶対に透過しない（チカレッタの体とお腹、足を保護）
-            if (x > width * 0.15 && x < width * 0.85 && y > height * 0.15 && y < height * 0.85) {
-              if ((r > 190 && g > 190 && b > 190) || (r > 180 && g > 130 && b < 100)) {
-                return false;
-              }
-            }
-          }
           
           return false;
         }
@@ -1712,13 +1710,22 @@
       `;
 
       if (char.imgUrl) {
+        // チカレッタ(白に赤いリボン)が背景と同化するのを防ぐため、チカレッタの場合のみ特別なクッキリ輪郭シャドウ(drop-shadow)を付与します
+        const isChickaletta = char.id === 'chickaletta';
+        const chickalettaImgStyle = isChickaletta 
+          ? 'filter: drop-shadow(0 0 4px rgba(0,0,0,0.85)) drop-shadow(0 0 1px rgba(0,0,0,0.95));' 
+          : '';
+        const imgClass = isChickaletta
+          ? 'w-[82%] h-[82%] object-contain select-none pointer-events-none hidden contrast-110'
+          : 'w-[82%] h-[82%] object-contain select-none pointer-events-none drop-shadow-md hidden';
+
         // 画像がある場合：ロード完了するまではフォールバックの絵文字バッジを表示しておき、
         // 画像の読み込みが正常に成功した瞬間、さらにCanvasで市松模様や白背景を完全に透過処理してから綺麗に表示します。
         // これにより、まだ画像をアップロードしていない段階（空ファイル）でもゲームが壊れず完全にプレイ可能です！
         wrapper.innerHTML = `
           <div class="relative w-full h-full flex flex-col justify-end items-center">
             <!-- 自動透過処理をonloadで適用するため、市松模様などが完全に消え去り背景に完全に馴染みます -->
-            <img src="${char.imgUrl}" alt="${char.name}" class="w-[82%] h-[82%] object-contain select-none pointer-events-none drop-shadow-md hidden" 
+            <img src="${char.imgUrl}" alt="${char.name}" class="${imgClass}" style="${chickalettaImgStyle}"
                  referrerPolicy="no-referrer"
                  onload="processAndCleanImage(this); this.classList.remove('hidden'); const fallback = this.parentNode.querySelector('.fallback-emoji-wrapper'); if(fallback) fallback.style.display='none';"
                  onerror="this.style.display='none'; const fallback = this.parentNode.querySelector('.fallback-emoji-wrapper'); if(fallback) fallback.style.display='block';">
