@@ -1,0 +1,6 @@
+{
+  "name": "パウパト・はたけのおてつだいゲーム",
+  "description": "3〜5歳向けのパウ・パトロールをテーマにした、スマホで楽しく遊べる、もぐらたたき風の畑のお手伝いゲームです。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

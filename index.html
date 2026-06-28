@@ -1,0 +1,1551 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <!-- スマホでのピンチイン・ズームを禁止し、100%表示に固定するメタタグ -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>パウパト・はたけのおてつだいゲーム</title>
+  
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    /* Google Fontsから丸みのあるかわいいフォントを読み込み */
+    @import url('https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500;700&display=swap');
+
+    body {
+      font-family: 'Kiwi Maru', 'M PLUS Rounded 1c', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      /* スマホでのダブルタップズーム等を防止 */
+      touch-action: manipulation;
+    }
+
+    /* 畑の土の穴の3D風な影と立体感 */
+    .soil-hole {
+      position: relative;
+      background: radial-gradient(circle, #2d1a04 60%, #170d02 100%);
+      border-radius: 50%;
+      box-shadow: inset 0 8px 12px rgba(0, 0, 0, 0.85), 
+                  0 3px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* キャラクターが土から飛び出すためのアニメーション制御 */
+    .character-wrapper {
+      position: absolute;
+      bottom: 2px; /* 名前の表記や画像の下が欠けないように少し上に配置 */
+      left: 0;
+      right: 0;
+      margin: 0 auto;
+      width: 90%;
+      height: 90%;
+      transform: translateY(110%);
+      transition: transform 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      will-change: transform;
+    }
+
+    /* このクラスがつくとキャラクターが顔を出す */
+    .character-wrapper.up {
+      transform: translateY(0%);
+    }
+
+    /* タップされたときの縮む演出 */
+    .character-wrapper.tapped {
+      transform: scale(0.55) translateY(25%);
+      transition: transform 0.12s ease-out;
+    }
+
+    /* もくもく浮かぶ雲のアニメーション */
+    @keyframes floatCloud {
+      0% { transform: translateX(-110%); }
+      100% { transform: translateX(110vw); }
+    }
+    .cloud-1 {
+      animation: floatCloud 28s linear infinite;
+    }
+    .cloud-2 {
+      animation: floatCloud 38s linear infinite;
+      animation-delay: -12s;
+    }
+
+    /* 季節の舞い落ちるデコレーション用アニメーション */
+    @keyframes fallAndSway {
+      0% {
+        transform: translateY(-50px) rotate(0deg) translateX(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.85;
+      }
+      90% {
+        opacity: 0.85;
+      }
+      100% {
+        transform: translateY(105vh) rotate(360deg) translateX(var(--drift));
+        opacity: 0;
+      }
+    }
+    .falling-decoration {
+      position: absolute;
+      top: -60px;
+      pointer-events: none;
+      animation: fallAndSway var(--speed) linear forwards;
+      z-index: 5; /* 畑の穴より下、背景より上 */
+    }
+
+    /* スタートボタンのポコポコ跳ねるアニメーション */
+    @keyframes bouncy {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    .btn-bouncy {
+      animation: bouncy 1.5s infinite ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      10%, 30%, 50%, 70%, 90% { transform: translate(-4px, 2px) rotate(-1deg); }
+      20%, 40%, 60%, 80% { transform: translate(4px, -2px) rotate(1deg); }
+    }
+    .animate-shake {
+      animation: shake 0.4s ease-in-out;
+    }
+
+    /* 文字を抜群に見やすくするポップなゲーム風袋文字 */
+    .text-pop-outline-red {
+      text-shadow: -3px -3px 0 #991b1b, 3px -3px 0 #991b1b, -3px 3px 0 #991b1b, 3px 3px 0 #991b1b,
+                   -1px -1px 0 #991b1b, 1px -1px 0 #991b1b, -1px 1px 0 #991b1b, 1px 1px 0 #991b1b,
+                   0 6px 10px rgba(0, 0, 0, 0.4);
+    }
+    .text-pop-outline-yellow {
+      text-shadow: -2px -2px 0 #78350f, 2px -2px 0 #78350f, -2px 2px 0 #78350f, 2px 2px 0 #78350f,
+                   0 3px 6px rgba(0, 0, 0, 0.3);
+    }
+    .text-pop-outline-green {
+      text-shadow: -3px -3px 0 #064e3b, 3px -3px 0 #064e3b, -3px 3px 0 #064e3b, 3px 3px 0 #064e3b,
+                   -1px -1px 0 #064e3b, 1px -1px 0 #064e3b, -1px 1px 0 #064e3b, 1px 1px 0 #064e3b,
+                   0 6px 10px rgba(0, 0, 0, 0.4);
+    }
+    .text-pop-outline-blue {
+      text-shadow: -3px -3px 0 #1e3a8a, 3px -3px 0 #1e3a8a, -3px 3px 0 #1e3a8a, 3px 3px 0 #1e3a8a,
+                   -1px -1px 0 #1e3a8a, 1px -1px 0 #1e3a8a, -1px 1px 0 #1e3a8a, 1px 1px 0 #1e3a8a,
+                   0 6px 10px rgba(0, 0, 0, 0.4);
+    }
+    .text-pop-outline-gold {
+      text-shadow: -3px -3px 0 #7c2d12, 3px -3px 0 #7c2d12, -3px 3px 0 #7c2d12, 3px 3px 0 #7c2d12,
+                   -1px -1px 0 #7c2d12, 1px -1px 0 #7c2d12, -1px 1px 0 #7c2d12, 1px 1px 0 #7c2d12,
+                   0 8px 15px rgba(251, 191, 36, 0.6);
+      animation: rainbow-glow 1s infinite alternate ease-in-out;
+    }
+    @keyframes rainbow-glow {
+      0% { filter: drop-shadow(0 0 5px #f59e0b) hue-rotate(0deg); }
+      100% { filter: drop-shadow(0 0 15px #fbbf24) hue-rotate(45deg); }
+    }
+
+    /* 星のエフェクト用アニメーション */
+    @keyframes starBurst {
+      0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(var(--tx), var(--ty)) scale(0) rotate(var(--rot));
+        opacity: 0;
+      }
+    }
+    .sparkle-particle {
+      position: absolute;
+      pointer-events: none;
+      animation: starBurst 0.6s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    /* ふわっと浮き上がる点数アニメーション */
+    @keyframes scoreUp {
+      0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 0;
+      }
+      50% {
+        transform: translate(-50%, -80px) scale(1.2);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -120px) scale(1);
+        opacity: 0;
+      }
+    }
+    .floating-score {
+      position: absolute;
+      left: 50%;
+      top: 15%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: scoreUp 0.8s ease-out forwards;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200 min-h-screen flex flex-col justify-between overflow-hidden relative">
+
+  <!-- 背景の雲 -->
+  <div class="absolute top-10 left-0 w-full overflow-hidden pointer-events-none z-0">
+    <div class="cloud-1 absolute top-2 left-0 text-white text-6xl opacity-40">☁️</div>
+    <div class="cloud-2 absolute top-16 left-0 text-white text-5xl opacity-30">☁️</div>
+  </div>
+
+  <!-- ゆっくり舞い落ちる季節の装飾用コンテナ -->
+  <div id="falling-container" class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-5"></div>
+
+  <!-- ゲーム全体コンテナ -->
+  <div id="game-container" class="relative w-full max-w-md mx-auto flex flex-col justify-between flex-grow z-10 px-4 py-2">
+    
+    <!-- ==================== 1. スタート画面 ==================== -->
+    <div id="screen-start" class="flex flex-col justify-between items-center text-center flex-grow py-3">
+      
+      <!-- 季節のきりかえボタン -->
+      <div class="w-full bg-white/80 border-2 border-dashed border-amber-300 rounded-2xl p-1.5 flex flex-col items-center">
+        <span class="text-[10px] font-bold text-amber-800 mb-1">🌸 きせつを タッチして かえられるよ 🌻</span>
+        <div class="flex justify-around w-full max-w-xs">
+          <button id="btn-season-spring" class="flex flex-col items-center px-2 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
+            <span class="text-xl">🌸</span>
+            <span class="text-[8px] font-bold text-pink-500">はる</span>
+          </button>
+          <button id="btn-season-summer" class="flex flex-col items-center px-2 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
+            <span class="text-xl">🌻</span>
+            <span class="text-[8px] font-bold text-amber-500">なつ</span>
+          </button>
+          <button id="btn-season-autumn" class="flex flex-col items-center px-2 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
+            <span class="text-xl">🍁</span>
+            <span class="text-[8px] font-bold text-orange-600">あき</span>
+          </button>
+          <button id="btn-season-winter" class="flex flex-col items-center px-2 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
+            <span class="text-xl">❄️</span>
+            <span class="text-[8px] font-bold text-sky-600">ふゆ</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-1">
+        <!-- おひさま -->
+        <div id="start-sun-icon" class="text-4xl mb-0.5 animate-bounce">☀️</div>
+        <h1 class="text-2xl md:text-3xl font-extrabold text-blue-600 tracking-wider leading-none drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
+          パウパト<br>
+          <span class="text-emerald-600 text-lg md:text-xl">はたけの おてつだい</span><br>
+          <span class="text-orange-500 text-2xl md:text-3xl">ゲーム</span>
+        </h1>
+        <p class="text-[9px] font-bold text-gray-700 mt-1 bg-white/70 px-2.5 py-0.5 rounded-full inline-block">
+          たいしょうねんれい：3〜5さい 🎵おんがくつき
+        </p>
+        <br>
+        <!-- ベストスコア表示 -->
+        <div class="mt-2 bg-yellow-100/95 border border-yellow-300 rounded-full px-4 py-1 inline-flex items-center space-x-1.5 shadow-sm">
+          <span class="text-xs">👑</span>
+          <span class="text-xs font-black text-amber-800">ベストスコア:</span>
+          <span id="best-score-text" class="text-sm font-black text-orange-600">0</span>
+          <span class="text-[9px] font-bold text-amber-800">てん</span>
+        </div>
+      </div>
+
+      <!-- キャラクター大集合エリア（幼児が「だれが出るのかな？」とワクワクする演出） -->
+      <div class="w-full bg-white/60 p-2 rounded-2xl border border-white/80 shadow-inner">
+        <span class="text-[9px] font-bold text-blue-700 block mb-1">🌟 しゅつげんする なかまたち（全8しゅるい！）</span>
+        <div id="character-intro-grid" class="grid grid-cols-4 gap-1.5">
+          <!-- JSで動的に生成されます（画像優先、なければ絵文字で可愛く表示されます） -->
+        </div>
+      </div>
+
+      <!-- あそびかた -->
+      <div class="bg-white/95 rounded-xl p-2.5 shadow-md w-full border-2 border-emerald-300">
+        <p class="text-[11px] font-bold text-emerald-700 mb-0.5">💡 あそびかた 💡</p>
+        <p class="text-[10px] font-medium text-gray-700 leading-normal">
+          ピョコッ とでてくる なかまたちを タッチ しよう！<br>
+          いたずらな <span class="text-purple-600 font-extrabold">「ライバールしちょう (🎩)」</span>をタッチすると<br>
+          てんすうが <span class="text-red-500 font-extrabold">ひかれちゃう (-10てん)</span> から きをつけてね！
+        </p>
+      </div>
+
+      <!-- スタートボタン（背景と違う超目立つ元気な赤オレンジ・ピンク色 ＋ 抜群に見やすいポップな袋文字フォント！） -->
+      <button id="btn-start" class="btn-bouncy w-full max-w-xs py-4 px-6 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 border-b-8 border-red-950 text-white font-black text-2xl md:text-3xl rounded-full shadow-[0_12px_30px_rgba(239,68,68,0.5)] border-4 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none tracking-wider">
+        <span class="block text-yellow-200 text-[11px] md:text-xs font-black tracking-widest mb-1 text-pop-outline-yellow">🎵 おんがくが ながれるよ 🎵</span>
+        <span class="text-pop-outline-red font-extrabold text-3xl md:text-4xl tracking-widest block">すたーと！ 🏁</span>
+      </button>
+    </div>
+
+    <!-- ==================== 2. ゲーム本編画面 ==================== -->
+    <div id="screen-game" class="hidden flex-col justify-between flex-grow">
+      
+      <!-- ヘッダー情報（制限時間、スコア） -->
+      <div class="bg-white/80 border-4 border-emerald-400 rounded-2xl p-2 flex justify-between items-center shadow-md">
+        <!-- のこりじかん -->
+        <div class="flex flex-col items-start w-2/5 pr-1">
+          <div class="flex items-center space-x-1">
+            <span class="text-sm">⏱️</span>
+            <span class="text-[10px] font-bold text-gray-700">のこり じかん</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2.5 mt-1 overflow-hidden border border-gray-300">
+            <div id="timer-bar" class="bg-gradient-to-r from-emerald-400 to-red-400 h-full w-full transition-all duration-1000"></div>
+          </div>
+          <div id="timer-text" class="text-[9px] font-bold text-gray-500 mt-0.5">30びょう</div>
+        </div>
+
+        <!-- アクティブな季節のバッジ -->
+        <div id="game-season-badge" class="bg-amber-100 border border-amber-300 rounded-full px-2 py-0.5 flex items-center space-x-1">
+          <span id="badge-icon" class="text-base">🌻</span>
+          <span id="badge-name" class="text-[9px] font-bold text-amber-800">なつ</span>
+        </div>
+
+        <!-- BGMコントローラー -->
+        <button id="btn-toggle-sound" class="text-lg bg-white border border-gray-300 rounded-full w-7 h-7 flex items-center justify-center shadow-sm active:scale-90 transition-transform">
+          🔊
+        </button>
+
+        <!-- てんすう -->
+        <div class="flex flex-col items-end w-1/3 pl-1 border-l border-gray-200">
+          <span class="text-[9px] font-bold text-gray-500">てんすう</span>
+          <div class="flex items-baseline space-x-0.5">
+            <span id="score-text" class="text-2xl font-extrabold text-orange-500">0</span>
+            <span class="text-[9px] font-bold text-gray-600">てん</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 畑のゲーム盤面（3列 × 3行 = 9つの大きな穴） -->
+      <div class="grid grid-cols-3 gap-x-3 gap-y-3 my-auto py-2">
+        
+        <!-- 穴 0 -->
+        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="0">
+          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        </div>
+
+        <!-- 穴 1 -->
+        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="1">
+          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        </div>
+
+        <!-- 穴 2 -->
+        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="2">
+          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        </div>
+
+        <!-- 穴 3 -->
+        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="3">
+          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        </div>
+
+        <!-- 穴 4 -->
+        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="4">
+          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        </div>
+
+        <!-- 穴 5 -->
+        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="5">
+          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        </div>
+
+        <!-- 穴 6 -->
+        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="6">
+          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        </div>
+
+        <!-- 穴 7 -->
+        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="7">
+          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        </div>
+
+        <!-- 穴 8 -->
+        <div class="soil-hole aspect-square w-full flex items-center justify-center overflow-hidden border-t-4 border-amber-950" data-hole="8">
+          <div class="character-wrapper flex flex-col justify-end items-center pb-1"></div>
+        </div>
+
+      </div>
+
+      <!-- 畑の下の草むら -->
+      <div class="text-center text-[9px] font-bold text-emerald-800/80 pb-1 leading-none">
+        🎩 ライバールしちょうは タッチしちゃダメだよ！きをつけてね！ 🍀
+      </div>
+    </div>
+
+    <!-- ==================== 3. リザルト（けっか）画面 ==================== -->
+    <div id="screen-result" class="hidden flex-col justify-between items-center text-center flex-grow py-4">
+      
+      <div>
+        <div class="text-5xl mb-1 animate-bounce">✨🏆✨</div>
+        <h2 class="text-2xl font-extrabold text-blue-600 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
+          おてつだい おしまい！
+        </h2>
+        <p class="text-emerald-700 font-bold text-xs mt-1">よく がんばったね！</p>
+      </div>
+
+      <!-- スコアとメダル表示 -->
+      <div class="bg-white/95 rounded-2xl p-5 shadow-lg border-4 border-yellow-300 w-full max-w-sm my-3">
+        <div id="result-medal" class="text-6xl mb-1 filter drop-shadow">🥇</div>
+        
+        <p class="text-gray-500 font-bold text-xs">あなたの てんすう</p>
+        <div class="flex justify-center items-baseline space-x-0.5 my-1">
+          <span id="final-score" class="text-4xl font-black text-orange-500">0</span>
+          <span class="text-lg font-bold text-gray-700">てん</span>
+        </div>
+
+        <!-- ほめ言葉メッセージ -->
+        <div id="result-message" class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-100 leading-relaxed">
+          グッドウェイしちょうも<br>おおいそぎで かんしゃ しているよ！
+        </div>
+      </div>
+
+      <!-- アクションボタン（並べて配置してより見やすく、おてつだい選択がスムーズに！） -->
+      <div class="w-full max-w-xs flex flex-col space-y-3 mb-2">
+        <!-- もういちどあそぶボタン（背景と違う超目立つエメラルド・イエローグリーン ＋ 抜群に見やすいポップな袋文字！） -->
+        <button id="btn-restart" class="btn-bouncy w-full py-4 px-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-lime-500 border-b-8 border-emerald-900 text-white font-black text-2xl md:text-3xl rounded-full shadow-[0_12px_30px_rgba(16,185,129,0.5)] border-4 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none tracking-wider">
+          <span class="text-pop-outline-green font-extrabold text-3xl md:text-4xl tracking-widest block">もういちど あそぶ 🔄</span>
+        </button>
+        
+        <!-- タイトルにもどるボタン（抜群に目立つポップなブルー・スカイグラデーション ＋ 見やすい大きな袋文字！） -->
+        <button id="btn-to-title" class="btn-bouncy w-full py-3 px-6 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-500 border-b-8 border-blue-900 text-white font-black text-xl md:text-2xl rounded-full shadow-[0_8px_20px_rgba(59,130,246,0.4)] border-4 border-yellow-100 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none tracking-wider">
+          <span class="text-pop-outline-blue font-extrabold text-2xl md:text-3xl tracking-wider block">タイトルに もどる 🏠</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 足元の緑 -->
+  <div class="h-4 bg-emerald-400 border-t-4 border-emerald-500 z-10"></div>
+
+  <!-- ==================== ゲームスクリプト ==================== -->
+  <script>
+    // =========================================================================
+    // 📸 【重要：画像の追加・差し替え方法の説明】 📸
+    // =========================================================================
+    // イラスト画像を追加して、絵文字の代わりに画面に表示させたい場合は、
+    // 以下の「imgUrl」部分に、追加した画像のURLを記入してください。
+    //
+    // 【例】
+    // 1. お手持ちの画像を assets フォルダーなどに保存します。
+    //    （例：assets/everest.png など）
+    // 2. 下記の配列から、Everest（エベレスト）の項目を探し、
+    //    imgUrl: 'assets/everest.png' と書き換えます。
+    // 3. 画像が設定されると、自動的に丸い絵文字の代わりにその画像が
+    //    土からピョコッと飛び出してくるようになります！
+    // =========================================================================
+
+    const CHARACTERS = [
+      {
+        id: 'chase',
+        name: 'チェイス',
+        emoji: '🐶👮', // おまわりさん犬チェイス
+        colorClass: 'bg-blue-400 border-blue-600 text-white',
+        imgUrl: 'assets/chase_mogura.png', /* ★ここにチェイスの画像URLを入れてね！ 例: 'assets/chase.png' */
+        soundFreq: 523.25, // ド (C5)
+        point: 10,
+        isObstacle: false
+      },
+      {
+        id: 'marshall',
+        name: 'マーシャル',
+        emoji: '🐶🚒', // しょうぼうし犬マーシャル
+        colorClass: 'bg-red-400 border-red-600 text-white',
+        imgUrl: 'assets/marshall_mogura.png', /* ★ここにマーシャルの画像URLを入れてね！ 例: 'assets/marshall.png' */
+        soundFreq: 587.33, // レ (D5)
+        point: 10,
+        isObstacle: false
+      },
+      {
+        id: 'skye',
+        name: 'スカイ',
+        emoji: '🐶🚁', // ヘリコプター犬スカイ
+        colorClass: 'bg-pink-400 border-pink-600 text-white',
+        imgUrl: 'assets/sky_mogura.png', /* ★ここにスカイの画像URLを入れてね！ 例: 'assets/skye.png' */
+        soundFreq: 659.25, // ミ (E5)
+        point: 10,
+        isObstacle: false
+      },
+      {
+        id: 'rubble',
+        name: 'ラブル',
+        emoji: '🐶🚧', // パワーショベル犬ラブル
+        colorClass: 'bg-yellow-400 border-yellow-600 text-yellow-950',
+        imgUrl: 'assets/rubble_mogura.png', /* ★ここにラブルの画像URLを入れてね！ 例: 'assets/rubble.png' */
+        soundFreq: 698.46, // ファ (F5)
+        point: 10,
+        isObstacle: false
+      },
+      {
+        id: 'rocky',
+        name: 'ロッキー',
+        emoji: '🐶♻️', // クリーン犬ロッキー
+        colorClass: 'bg-green-400 border-green-600 text-white',
+        imgUrl: 'assets/rocky_mogura.png', /* ★ここにロッキーの画像URLを入れてね！ 例: 'assets/rocky.png' */
+        soundFreq: 783.99, // ソ (G5)
+        point: 10,
+        isObstacle: false
+      },
+      {
+        id: 'zuma',
+        name: 'ズーマ',
+        emoji: '🐶⚓', // ホバークラフト犬ズーマ
+        colorClass: 'bg-orange-400 border-orange-600 text-white',
+        imgUrl: 'assets/zuma_mogura.png', /* ★ここにズーマの画像URLを入れてね！ 例: 'assets/zuma.png' */
+        soundFreq: 880.00, // ラ (A5)
+        point: 10,
+        isObstacle: false
+      },
+      // 【追加①】エベレスト (Everest) 雪山を大活躍するハスキー犬
+      {
+        id: 'everest',
+        name: 'エベレスト',
+        emoji: '🐶❄️',
+        colorClass: 'bg-cyan-400 border-cyan-600 text-white',
+        imgUrl: 'assets/eberest_mogura.png', /* ★ここにエベレストの画像URLを入れてね！ 例: 'assets/everest.png' */
+        soundFreq: 987.77, // シ (B5)
+        point: 15, // エベレストは少しだけ高得点！
+        isObstacle: false
+      },
+      {
+        id: 'chickaletta',
+        name: 'チカレッタ',
+        emoji: '🐔🎀', // チカレッタ
+        colorClass: 'bg-orange-100 border-amber-300 text-orange-600',
+        imgUrl: 'assets/chikaletta_mogura.png', /* ★ここにチカレッタの画像URLを入れてね！ */
+        soundFreq: 1046.50, // 高い ド (C6)
+        point: 30, // ボーナス点！
+        isObstacle: false
+      },
+      // 【追加②】お邪魔キャラを「ライバール市長」に変更！
+      {
+        id: 'humdinger',
+        name: 'ライバール', // ライバールしちょう
+        emoji: '🎩🐱', // シルクハットにニャンパトロールのネコちゃん
+        colorClass: 'bg-purple-300 border-purple-600 text-purple-950',
+        imgUrl: 'assets/humdinger_mogura.png', /* ★ここにライバール市長の画像URLを入れてね！ 例: 'assets/humdinger.png' */
+        soundFreq: 196.00, // 低いソ (G4) ガッカリ音
+        point: -10, // タッチするとマイナス10てん！
+        isObstacle: true
+      }
+    ];
+
+    // 季節ごとの装飾設定
+    const SEASONS = {
+      spring: {
+        name: 'はる',
+        icon: '🌸',
+        decorations: ['🌸', '💮', '🌱', '🎈', '🦋'],
+        bgGradient: 'from-pink-200 via-pink-100 to-emerald-100',
+        sunIcon: '☀️🌷',
+        badgeColor: 'bg-pink-100 border-pink-300 text-pink-700'
+      },
+      summer: {
+        name: 'なつ',
+        icon: '🌻',
+        decorations: ['🌻', '🍉', '🍦', '🍋', '🐠', '👒'],
+        bgGradient: 'from-sky-300 via-sky-200 to-emerald-200',
+        sunIcon: '☀️🌻',
+        badgeColor: 'bg-amber-100 border-amber-300 text-amber-800'
+      },
+      autumn: {
+        name: 'あき',
+        icon: '🍁',
+        decorations: ['🍁', '🍂', '🌰', '🍎', '🍄', '🍇'],
+        bgGradient: 'from-orange-200 via-yellow-100 to-emerald-100',
+        sunIcon: '☀️🍎',
+        badgeColor: 'bg-orange-100 border-orange-300 text-orange-800'
+      },
+      winter: {
+        name: 'ふゆ',
+        icon: '❄️',
+        decorations: ['❄️', '⛄', '🧤', '🍓', '🍊', '🔔'],
+        bgGradient: 'from-blue-200 via-slate-100 to-teal-100',
+        sunIcon: '☀️⛄',
+        badgeColor: 'bg-sky-100 border-sky-300 text-sky-800'
+      }
+    };
+
+    let currentSeasonKey = 'summer'; // デフォルト季節
+
+    // ゲーム状態
+    const GAME_DURATION = 30; // 制限時間
+    let score = 0;
+    let timeLeft = GAME_DURATION;
+    let isPlaying = false;
+    let timerInterval = null;
+    let spawnTimeout = null;
+    let activeHoles = Array(9).fill(null); // 9つの穴
+    let decorationInterval = null; // 季節エフェクト
+
+    // 音声
+    let audioCtx = null;
+    let isSoundMuted = false;
+    let bgmInterval = null;
+    let bgmStep = 0;
+
+    // DOM要素
+    const screenStart = document.getElementById('screen-start');
+    const screenGame = document.getElementById('screen-game');
+    const screenResult = document.getElementById('screen-result');
+    
+    const btnStart = document.getElementById('btn-start');
+    const btnRestart = document.getElementById('btn-restart');
+    const btnToTitle = document.getElementById('btn-to-title');
+    const btnToggleSound = document.getElementById('btn-toggle-sound');
+    
+    const btnSpring = document.getElementById('btn-season-spring');
+    const btnSummer = document.getElementById('btn-season-summer');
+    const btnAutumn = document.getElementById('btn-season-autumn');
+    const btnWinter = document.getElementById('btn-season-winter');
+    const startSunIcon = document.getElementById('start-sun-icon');
+    
+    const gameSeasonBadge = document.getElementById('game-season-badge');
+    const badgeIcon = document.getElementById('badge-icon');
+    const badgeName = document.getElementById('badge-name');
+    
+    const scoreText = document.getElementById('score-text');
+    const timerBar = document.getElementById('timer-bar');
+    const timerText = document.getElementById('timer-text');
+    
+    const finalScore = document.getElementById('final-score');
+    const resultMedal = document.getElementById('result-medal');
+    const resultMessage = document.getElementById('result-message');
+    
+    const holes = document.querySelectorAll('.soil-hole');
+    const fallingContainer = document.getElementById('falling-container');
+    const bestScoreText = document.getElementById('best-score-text');
+    let bestScore = 0;
+
+    // 画像の市松模様背景（薄いグレーと白の格子）や純白の背景を動的に検知し、外側と繋がっている背景のみをCanvasを使って完全に透過させる関数
+    function processAndCleanImage(imgElement) {
+      // 処理済み、またはすでにデータURIに変換済みの場合は無限ループ防止のためスキップ
+      if (imgElement.dataset.processed === 'true' || imgElement.src.startsWith('data:')) return;
+      
+      try {
+        const isChikaletta = imgElement.src.includes('chikaletta') || imgElement.src.includes('chickaletta') || imgElement.alt.includes('チカレッタ');
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = imgElement.naturalWidth;
+        canvas.height = imgElement.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgElement, 0, 0);
+        
+        const width = canvas.width;
+        const height = canvas.height;
+        if (width === 0 || height === 0) return;
+        
+        const imageData = ctx.getImageData(0, 0, width, height);
+        const data = imageData.data;
+        
+        // 1. サンプル収集：四隅と外周の代表的な背景候補色を収集してダイナミックに背景の市松模様色を検知します
+        const sampleColors = [];
+        const pushSample = (px, py) => {
+          const idx = (py * width + px) * 4;
+          const r = data[idx];
+          const g = data[idx+1];
+          const b = data[idx+2];
+          const a = data[idx+3];
+          if (a > 100) { // ある程度不透明なピクセルのみ
+            const exists = sampleColors.some(s => Math.abs(s.r - r) + Math.abs(s.g - g) + Math.abs(s.b - b) < 15);
+            if (!exists) {
+              sampleColors.push({ r, g, b });
+            }
+          }
+        };
+        
+        // 端から2ピクセル内側をサンプリングして色を登録
+        const inset = 2;
+        pushSample(inset, inset); // 左上
+        pushSample(width - 1 - inset, inset); // 右上
+        pushSample(inset, Math.floor(height / 2)); // 左中央
+        pushSample(width - 1 - inset, Math.floor(height / 2)); // 右中央
+        pushSample(Math.floor(width / 2), inset); // 上中央
+        
+        // 背景・市松模様色を検知するヘルパー関数
+        function isBackgroundPixel(r, g, b, a, x, y) {
+          // すでにほぼ透明なピクセルは背景として通す
+          if (a < 50) return true;
+          
+          // 1. サンプルした外周の色（確実に背景である市松模様の白やグレー）と一致するかを最優先でチェックします
+          for (let i = 0; i < sampleColors.length; i++) {
+            const s = sampleColors[i];
+            const dist = Math.abs(r - s.r) + Math.abs(g - s.g) + Math.abs(b - s.b);
+            if (dist < 32) { // 閾値を少し広げて 32 に（より確実に格子背景を検出）
+              return true;
+            }
+          }
+          
+          // 2. 一般的な市松模様（白＋薄いグレー）の予備的な判定（念のため）
+          const max = Math.max(r, g, b);
+          const min = Math.min(r, g, b);
+          const diff = max - min;
+          // 純白（純白の背景は無条件で背景とする）
+          if (r > 240 && g > 240 && b > 240) return true;
+          // 標準的なグレー（非常に狭い無彩色の範囲。市松模様の濃いグレーや薄いグレーをより広範囲にカバー）
+          if (diff < 12 && max > 120 && max < 245) return true;
+
+          // 3. チカレッタ(白に赤いリボン、黄色い嘴)の体内保護ロジック
+          // サンプリングされた確実な背景色や予備市松判定に該当しなかった場合にのみ適用することで、外周の格子背景がチカレッタの周囲に残るのを完璧に防ぎます！
+          if (isChikaletta) {
+            // 中央付近、かつ白・黄色系なら絶対に透過しない（チカレッタの体とお腹、足を保護）
+            if (x > width * 0.15 && x < width * 0.85 && y > height * 0.15 && y < height * 0.85) {
+              if ((r > 190 && g > 190 && b > 190) || (r > 180 && g > 130 && b < 100)) {
+                return false;
+              }
+            }
+          }
+          
+          return false;
+        }
+        
+        // 幅優先探索（BFS）により、画像の外周から連結している背景色のみを透明化します。
+        // これにより、キャラクターの内側（白目や白い服、ハットの白い部分など）は絶対に透過されません！
+        const visited = new Uint8Array(width * height);
+        const queue = [];
+        
+        // 1. 画像の4辺（外周部）にある背景候補ピクセルをスタート地点（シード）としてキューに登録
+        for (let x = 0; x < width; x++) {
+          // 上端
+          const idxTop = x;
+          const pTop = idxTop * 4;
+          if (isBackgroundPixel(data[pTop], data[pTop+1], data[pTop+2], data[pTop+3], x, 0)) {
+            queue.push(idxTop);
+            visited[idxTop] = 1;
+          }
+          
+          // 下端（チカレッタ以外のみ登録。チカレッタは下端の白い切り口から体内に透過が這い上がるのを防ぐ）
+          if (!isChikaletta) {
+            const idxBot = (height - 1) * width + x;
+            const pBot = idxBot * 4;
+            if (isBackgroundPixel(data[pBot], data[pBot+1], data[pBot+2], data[pBot+3], x, height - 1)) {
+              queue.push(idxBot);
+              visited[idxBot] = 1;
+            }
+          }
+        }
+        for (let y = 1; y < height - 1; y++) {
+          // 左端
+          const idxLeft = y * width;
+          const pLeft = idxLeft * 4;
+          if (isBackgroundPixel(data[pLeft], data[pLeft+1], data[pLeft+2], data[pLeft+3], 0, y)) {
+            queue.push(idxLeft);
+            visited[idxLeft] = 1;
+          }
+          // 右端
+          const idxRight = y * width + (width - 1);
+          const pRight = idxRight * 4;
+          if (isBackgroundPixel(data[pRight], data[pRight+1], data[pRight+2], data[pRight+3], width - 1, y)) {
+            queue.push(idxRight);
+            visited[idxRight] = 1;
+          }
+        }
+        
+        let head = 0;
+        let changed = false;
+        
+        // 2. BFS実行
+        while (head < queue.length) {
+          const idx = queue[head++];
+          const x = idx % width;
+          const y = Math.floor(idx / width);
+          
+          // この連結背景ピクセルを完全に透明（アルファ = 0）にする
+          const pIdx = idx * 4;
+          if (data[pIdx+3] !== 0) {
+            data[pIdx+3] = 0;
+            changed = true;
+          }
+          
+          // 隣接4方向
+          const neighbors = [];
+          if (x > 0) neighbors.push(idx - 1);          // 左
+          if (x < width - 1) neighbors.push(idx + 1);  // 右
+          if (y > 0) neighbors.push(idx - width);      // 上
+          if (y < height - 1) neighbors.push(idx + width); // 下
+          
+          for (let i = 0; i < neighbors.length; i++) {
+            const nIdx = neighbors[i];
+            if (visited[nIdx] === 0) {
+              const npIdx = nIdx * 4;
+              const nx = nIdx % width;
+              const ny = Math.floor(nIdx / width);
+              if (isBackgroundPixel(data[npIdx], data[npIdx+1], data[npIdx+2], data[npIdx+3], nx, ny)) {
+                visited[nIdx] = 1;
+                queue.push(nIdx);
+              }
+            }
+          }
+        }
+        
+        if (changed) {
+          ctx.putImageData(imageData, 0, 0);
+          imgElement.dataset.processed = 'true';
+          imgElement.src = canvas.toDataURL(); // 透過処理した新しい画像に置き換え
+        } else {
+          imgElement.dataset.processed = 'true';
+        }
+      } catch (e) {
+        console.warn("画像の自動透過処理をスキップしました (セキュリティ制限などのため):", e);
+        imgElement.dataset.processed = 'true';
+      }
+    }
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playSound(freq, type = 'sine', duration = 0.15, delay = 0, volume = 0.25) {
+      if (!audioCtx || isSoundMuted) return;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      setTimeout(() => {
+        try {
+          const osc = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          
+          gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.005, audioCtx.currentTime + duration);
+          
+          osc.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {
+          console.log("オーディオ再生エラー:", e);
+        }
+      }, delay * 1000);
+    }
+
+    function playSoundStart() {
+      initAudio();
+      playSound(392.00, 'triangle', 0.1, 0, 0.3); // ソ
+      playSound(523.25, 'triangle', 0.1, 0.08, 0.3); // ド
+      playSound(659.25, 'triangle', 0.1, 0.16, 0.3); // ミ
+      playSound(783.99, 'sine', 0.3, 0.24, 0.3); // ソ（高）
+    }
+
+    function playSoundTap(freq) {
+      playSound(freq, 'sine', 0.12, 0, 0.35);
+      playSound(freq * 1.5, 'sine', 0.15, 0.04, 0.3);
+    }
+
+    // チカレッタのコッコッコッコケッーーー！🐔 をWeb Audioで表現するコミカル音源
+    function playSoundChickaletta() {
+      if (!audioCtx || isSoundMuted) return;
+      initAudio();
+      
+      const now = audioCtx.currentTime;
+      
+      // 1音目：「コッ」（低〜高へスイープ）
+      playCluck(320, 420, 0.07, 0, 'sine');
+      // 2音目：「コッ」
+      playCluck(350, 450, 0.07, 0.08, 'sine');
+      // 3音目：「コケッーーー！」（高音で響く）
+      playCluck(380, 680, 0.28, 0.16, 'triangle');
+      
+      function playCluck(startFreq, endFreq, dur, delayTime, type = 'sine') {
+        setTimeout(() => {
+          try {
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            osc.type = type;
+            osc.frequency.setValueAtTime(startFreq, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(endFreq, audioCtx.currentTime + dur - 0.01);
+            
+            gainNode.gain.setValueAtTime(0.25, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.005, audioCtx.currentTime + dur);
+            
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + dur);
+          } catch(e) {
+            console.log("チカレッタSE再生エラー:", e);
+          }
+        }, delayTime * 1000);
+      }
+    }
+
+    function playSoundMiss() {
+      // ライバール市長を叩いてしまった時の残念な音
+      playSound(220.00, 'sawtooth', 0.15, 0, 0.25);
+      playSound(196.00, 'sawtooth', 0.25, 0.08, 0.25);
+    }
+
+    function playSoundTimeup() {
+      playSound(660, 'square', 0.1, 0, 0.2);
+      playSound(660, 'square', 0.1, 0.18, 0.2);
+      playSound(660, 'square', 0.1, 0.36, 0.2);
+      playSound(880, 'sine', 0.6, 0.54, 0.3);
+    }
+
+    // 陽気なペンタトニックスケールのメロディ
+    const BGM_NOTES = [
+      523.25, 587.33, 659.25, 783.99, 880.00, 783.99, 659.25, 587.33, 
+      523.25, 523.25, 587.33, 587.33, 659.25, 783.99, 880.00, 1046.50, 
+      880.00, 783.99, 659.25, 587.33, 523.25, 587.33, 659.25, 783.99, 
+      880.00, 880.00, 783.99, 659.25, 587.33, 659.25, 523.25, 523.25  
+    ];
+
+    function startBGM() {
+      stopBGM();
+      bgmStep = 0;
+      bgmInterval = setInterval(() => {
+        if (!isPlaying || isSoundMuted) return;
+        const freq = BGM_NOTES[bgmStep % BGM_NOTES.length];
+        const isDownbeat = (bgmStep % 4 === 0);
+        const volume = isDownbeat ? 0.05 : 0.03;
+        const duration = isDownbeat ? 0.18 : 0.12;
+        playSound(freq, 'sine', duration, 0, volume);
+        bgmStep++;
+      }, 250);
+    }
+
+    function stopBGM() {
+      if (bgmInterval) {
+        clearInterval(bgmInterval);
+        bgmInterval = null;
+      }
+    }
+
+    // 季節の設定
+    function setSeason(seasonKey) {
+      currentSeasonKey = seasonKey;
+      const season = SEASONS[seasonKey];
+      
+      [btnSpring, btnSummer, btnAutumn, btnWinter].forEach(btn => {
+        btn.classList.remove('bg-white', 'border-amber-400', 'shadow-md');
+        btn.classList.add('border-transparent');
+      });
+      
+      let targetBtn = btnSpring;
+      if (seasonKey === 'summer') targetBtn = btnSummer;
+      else if (seasonKey === 'autumn') targetBtn = btnAutumn;
+      else if (seasonKey === 'winter') targetBtn = btnWinter;
+      
+      targetBtn.classList.remove('border-transparent');
+      targetBtn.classList.add('bg-white', 'border-amber-400', 'shadow-md');
+      
+      startSunIcon.textContent = season.sunIcon;
+      
+      badgeIcon.textContent = season.icon;
+      badgeName.textContent = season.name;
+      gameSeasonBadge.className = `${season.badgeColor} rounded-full px-2 py-0.5 flex items-center space-x-1`;
+
+      document.body.className = `bg-gradient-to-b ${season.bgGradient} min-h-screen flex flex-col justify-between overflow-hidden relative`;
+      
+      initAudio();
+      playSound(659.25, 'sine', 0.08, 0, 0.15);
+      playSound(783.99, 'sine', 0.12, 0.04, 0.15);
+    }
+
+    // 装飾を1個降らせる
+    function spawnSingleDecoration() {
+      if (!fallingContainer) return;
+      
+      const season = SEASONS[currentSeasonKey];
+      const emoji = season.decorations[Math.floor(Math.random() * season.decorations.length)];
+      
+      const element = document.createElement('div');
+      element.className = 'falling-decoration text-2xl md:text-3xl';
+      element.textContent = emoji;
+      
+      element.style.left = `${Math.random() * 95}%`;
+      
+      const speed = 4 + Math.random() * 4;
+      element.style.setProperty('--speed', `${speed}s`);
+      
+      const drift = -60 + Math.random() * 120;
+      element.style.setProperty('--drift', `${drift}px`);
+      
+      const scale = 0.8 + Math.random() * 0.5;
+      element.style.transform = `scale(${scale})`;
+      
+      fallingContainer.appendChild(element);
+      
+      setTimeout(() => {
+        element.remove();
+      }, speed * 1000);
+    }
+
+    function startFallingLoop() {
+      stopFallingLoop();
+      decorationInterval = setInterval(spawnSingleDecoration, 800);
+    }
+
+    function stopFallingLoop() {
+      if (decorationInterval) {
+        clearInterval(decorationInterval);
+        decorationInterval = null;
+      }
+    }
+
+    function setResultEvaluation(score) {
+      let medal = '🥉';
+      let msg = 'がんばったね！🥉<br>畑がすこしピカピカになったよ。また挑戦してね！';
+      
+      if (score >= 120) {
+        medal = '👑🏆🥇';
+        msg = 'すごすぎる！てんさいお手伝いマイスター！<br>グッドウェイしちょうも、チカレッタも、パウ・パトロールのなかまたちも全員で大喜びしているよ！🎉';
+      } else if (score >= 80) {
+        medal = '🥇';
+        msg = 'たいへんよくできました！💮<br>あなたはもう、畑のお手伝いマスターだね！グッドウェイ市長も大喜びしているよ！';
+      } else if (score >= 40) {
+        medal = '🥈';
+        msg = 'よくがんばったね！🥈<br>畑がとっても綺麗になったよ！ありがとう！';
+      }
+      
+      resultMedal.textContent = medal;
+      resultMessage.innerHTML = msg;
+    }
+
+    function spawnLoop() {
+      if (!isPlaying) return;
+
+      const currentActiveCount = activeHoles.filter(x => x !== null).length;
+      
+      let maxActive = 2;
+      if (timeLeft < 15) {
+        maxActive = 3;
+      }
+      
+      if (currentActiveCount < maxActive) {
+        const emptyHoles = [];
+        activeHoles.forEach((val, i) => {
+          if (val === null) emptyHoles.push(i);
+        });
+        
+        if (emptyHoles.length > 0) {
+          const randomHoleIndex = emptyHoles[Math.floor(Math.random() * emptyHoles.length)];
+          
+          let randomChar;
+          const rand = Math.random();
+          
+          if (rand < 0.22) {
+            // 22%の確率でお邪魔ライバール市長 (Humdinger)
+            randomChar = CHARACTERS.find(c => c.id === 'humdinger');
+          } else if (rand < 0.32) {
+            // 10%の確率でレアなチカレッタ
+            randomChar = CHARACTERS.find(c => c.id === 'chickaletta');
+          } else if (rand < 0.42) {
+            // 10%の確率でエベレスト
+            randomChar = CHARACTERS.find(c => c.id === 'everest');
+          } else {
+            // 通常のパウ・パトロールのなかまたちからランダム
+            const standardChars = CHARACTERS.filter(c => c.id !== 'chickaletta' && c.id !== 'humdinger' && c.id !== 'everest');
+            randomChar = standardChars[Math.floor(Math.random() * standardChars.length)];
+          }
+
+          showCharacter(randomHoleIndex, randomChar);
+        }
+      }
+
+      let nextDelay = 1000;
+      if (timeLeft < 10) {
+        nextDelay = 650;
+      } else if (timeLeft < 20) {
+        nextDelay = 850;
+      }
+
+      spawnTimeout = setTimeout(spawnLoop, nextDelay);
+    }
+
+    function showCharacter(holeIndex, char) {
+      activeHoles[holeIndex] = char;
+      const hole = document.querySelector(`[data-hole="${holeIndex}"]`);
+      const wrapper = hole.querySelector('.character-wrapper');
+
+      wrapper.innerHTML = '';
+      wrapper.className = 'character-wrapper';
+
+      // 可愛い丸いバッジ（絵文字版）のHTML
+      const borderStyle = char.isObstacle ? 'border-purple-500 shadow-purple-200 animate-pulse' : 'border-amber-400 shadow-amber-100';
+      const emojiHtml = `
+        <div class="w-14 h-14 md:w-18 md:h-18 rounded-full border-4 ${char.colorClass} flex flex-col items-center justify-center shadow-md relative transform active:scale-95">
+          <span class="text-2xl md:text-3xl select-none pointer-events-none filter drop-shadow">${char.emoji}</span>
+          <span class="absolute -bottom-1 bg-white text-gray-800 text-[7px] md:text-[9px] font-black px-1 py-0.5 rounded-full border-2 ${borderStyle} whitespace-nowrap shadow-sm scale-90">
+            ${char.name}
+          </span>
+        </div>
+      `;
+
+      if (char.imgUrl) {
+        // 画像がある場合：ロード完了するまではフォールバックの絵文字バッジを表示しておき、
+        // 画像の読み込みが正常に成功した瞬間、さらにCanvasで市松模様や白背景を完全に透過処理してから綺麗に表示します。
+        // これにより、まだ画像をアップロードしていない段階（空ファイル）でもゲームが壊れず完全にプレイ可能です！
+        wrapper.innerHTML = `
+          <div class="relative w-full h-full flex flex-col justify-end items-center">
+            <!-- 自動透過処理をonloadで適用するため、市松模様などが完全に消え去り背景に完全に馴染みます -->
+            <img src="${char.imgUrl}" alt="${char.name}" class="w-full h-auto max-h-[86%] object-contain select-none pointer-events-none drop-shadow-md hidden" 
+                 referrerPolicy="no-referrer"
+                 onload="processAndCleanImage(this); this.classList.remove('hidden'); const fallback = this.parentNode.querySelector('.fallback-emoji-wrapper'); if(fallback) fallback.style.display='none';"
+                 onerror="this.style.display='none'; const fallback = this.parentNode.querySelector('.fallback-emoji-wrapper'); if(fallback) fallback.style.display='block';">
+            
+            <span class="absolute bottom-2 bg-white/95 text-gray-800 text-[8px] md:text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow border border-gray-200" style="z-index: 10;">
+              ${char.name}
+            </span>
+            
+            <div class="fallback-emoji-wrapper w-full h-full flex justify-center items-center">
+              ${emojiHtml}
+            </div>
+          </div>
+        `;
+      } else {
+        wrapper.innerHTML = emojiHtml;
+      }
+
+      requestAnimationFrame(() => {
+        wrapper.classList.add('up');
+      });
+
+      let stayDuration = 2400;
+      if (timeLeft < 10) {
+        stayDuration = 1600;
+      } else if (timeLeft < 20) {
+        stayDuration = 1900;
+      }
+
+      const hideTimeout = setTimeout(() => {
+        if (activeHoles[holeIndex] === char) {
+          hideCharacter(holeIndex);
+        }
+      }, stayDuration);
+
+      wrapper.dataset.timeoutId = hideTimeout;
+    }
+
+    function hideCharacter(holeIndex) {
+      const hole = document.querySelector(`[data-hole="${holeIndex}"]`);
+      const wrapper = hole.querySelector('.character-wrapper');
+      
+      wrapper.classList.remove('up');
+      activeHoles[holeIndex] = null;
+
+      setTimeout(() => {
+        if (!wrapper.classList.contains('up')) {
+          wrapper.innerHTML = '';
+        }
+      }, 250);
+    }
+
+    function handleTap(e) {
+      if (!isPlaying) return;
+
+      const hole = e.currentTarget;
+      const holeIndex = parseInt(hole.dataset.hole);
+      const char = activeHoles[holeIndex];
+
+      if (!char) return; 
+
+      const wrapper = hole.querySelector('.character-wrapper');
+
+      if (wrapper.classList.contains('tapped')) return;
+
+      activeHoles[holeIndex] = null;
+
+      if (wrapper.dataset.timeoutId) {
+        clearTimeout(parseInt(wrapper.dataset.timeoutId));
+      }
+
+      score += char.point;
+      if (score < 0) {
+        score = 0;
+      }
+      scoreText.textContent = score;
+
+      const isChickaletta = char.id === 'chickaletta';
+
+      if (char.isObstacle) {
+        playSoundMiss();
+      } else if (isChickaletta) {
+        playSoundChickaletta();
+        triggerSpecialChickalettaEffect();
+      } else {
+        playSoundTap(char.soundFreq);
+      }
+
+      if (navigator.vibrate) {
+        if (char.isObstacle) {
+          navigator.vibrate([60, 40, 60]);
+        } else if (isChickaletta) {
+          navigator.vibrate([30, 20, 30, 20, 80]);
+        } else {
+          navigator.vibrate(35);
+        }
+      }
+
+      wrapper.classList.add('tapped');
+
+      createSparkles(e, hole, char.isObstacle, isChickaletta);
+      createFloatingText(char.point, char.emoji, hole, char.isObstacle, isChickaletta);
+
+      setTimeout(() => {
+        wrapper.classList.remove('up');
+        wrapper.classList.remove('tapped');
+        wrapper.innerHTML = '';
+      }, 200);
+    }
+
+    function triggerSpecialChickalettaEffect() {
+      // 画面を一瞬ピカッと黄色に光らせ、ブルブルと揺らす楽しい特殊演出！
+      const flash = document.createElement('div');
+      flash.className = 'fixed inset-0 bg-yellow-300/30 pointer-events-none z-50 transition-opacity duration-300';
+      document.body.appendChild(flash);
+      setTimeout(() => {
+        flash.style.opacity = '0';
+        setTimeout(() => flash.remove(), 300);
+      }, 100);
+
+      const gameContainer = document.getElementById('screen-game');
+      if (gameContainer) {
+        gameContainer.classList.add('animate-shake');
+        setTimeout(() => {
+          gameContainer.classList.remove('animate-shake');
+        }, 500);
+      }
+    }
+
+    function createSparkles(event, containerElement, isObstacle, isChickaletta) {
+      let clientX, clientY;
+      if (event.touches && event.touches.length > 0) {
+        clientX = event.touches[0].clientX;
+        clientY = event.touches[0].clientY;
+      } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      }
+
+      const rect = containerElement.getBoundingClientRect();
+      const relativeX = clientX - rect.left;
+      const relativeY = clientY - rect.top;
+
+      const normalIcons = ['⭐', '🌟', '✨', '💖', '🍀', '🦴'];
+      const obstacleIcons = ['🌀', '🐾', '❌', '😢', '🎩'];
+      const chickalettaIcons = ['🐔', '🐣', '🥚', '💖', '✨', '🎀', '🎈', '🎉'];
+      
+      let particleIcons = normalIcons;
+      if (isObstacle) {
+        particleIcons = obstacleIcons;
+      } else if (isChickaletta) {
+        particleIcons = chickalettaIcons;
+      }
+      
+      let count = 10;
+      if (isObstacle) {
+        count = 7;
+      } else if (isChickaletta) {
+        count = 18; // 豪華なお祝い大爆発！
+      }
+
+      for (let i = 0; i < count; i++) {
+        const particle = document.createElement('div');
+        particle.className = isChickaletta 
+          ? 'sparkle-particle text-2xl md:text-3xl filter drop-shadow-sm scale-110'
+          : 'sparkle-particle text-xl md:text-2xl';
+        particle.textContent = particleIcons[Math.floor(Math.random() * particleIcons.length)];
+        
+        particle.style.left = `${relativeX - 12}px`;
+        particle.style.top = `${relativeY - 12}px`;
+
+        const angle = (i * (360 / count) + Math.random() * 30) * (Math.PI / 180);
+        let distance = isObstacle ? (40 + Math.random() * 40) : (60 + Math.random() * 70);
+        if (isChickaletta) {
+          distance = 80 + Math.random() * 80; // チカレッタはさらに遠くに飛ぶ！
+        }
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance - 15;
+        const rot = -180 + Math.random() * 360;
+
+        particle.style.setProperty('--tx', `${tx}px`);
+        particle.style.setProperty('--ty', `${ty}px`);
+        particle.style.setProperty('--rot', `${rot}deg`);
+
+        containerElement.appendChild(particle);
+
+        setTimeout(() => {
+          particle.remove();
+        }, isChickaletta ? 800 : 600); // チカレッタは余韻を長めに
+      }
+    }
+
+    function createFloatingText(points, emoji, containerElement, isObstacle, isChickaletta) {
+      const floatDiv = document.createElement('div');
+      
+      if (isObstacle) {
+        const encouragementWord = 'あれれ！';
+        floatDiv.className = 'floating-score font-black text-2xl md:text-3xl text-purple-600 drop-shadow-[0_2px_4px_rgba(255,255,255,0.9)] whitespace-nowrap flex items-center space-x-1';
+        floatDiv.innerHTML = `<span>${emoji}</span> <span class="bg-purple-100 px-2 py-0.5 rounded-full border-2 border-purple-400 text-[10px] font-bold text-purple-700">${encouragementWord}</span> <span class="text-purple-600">${points}</span>`;
+      } else if (isChickaletta) {
+        // チカレッタげっと専用の、超おめでたい虹色グラデーション文字！
+        floatDiv.className = 'floating-score font-black whitespace-nowrap flex flex-col items-center justify-center scale-110';
+        floatDiv.innerHTML = `
+          <span class="bg-gradient-to-r from-pink-500 via-yellow-400 to-amber-500 text-white text-[10px] md:text-[11px] px-2 py-0.5 rounded-full border-2 border-white font-black shadow-md mb-0.5 animate-pulse">👑 チカレッタ げっと！</span>
+          <span class="flex items-center space-x-1">
+            <span class="text-2xl md:text-3xl select-none filter drop-shadow">${emoji}</span>
+            <span class="text-pop-outline-gold text-2xl md:text-3xl font-black text-yellow-300">+${points}</span>
+          </span>
+        `;
+      } else {
+        let encouragementWord = 'タッチ！';
+        if (points > 15) {
+          encouragementWord = '超ハッピー！';
+          floatDiv.className = 'floating-score font-black text-3xl md:text-4xl text-red-500 scale-110 drop-shadow-[0_2px_4px_rgba(255,255,255,0.9)] whitespace-nowrap flex items-center space-x-1';
+        } else {
+          const words = ['タッチ！', 'できた！', 'やったね！', 'おうえん！', 'ナイス！'];
+          encouragementWord = words[Math.floor(Math.random() * words.length)];
+          floatDiv.className = 'floating-score font-black text-2xl md:text-3xl text-orange-500 drop-shadow-[0_2px_4px_rgba(255,255,255,0.9)] whitespace-nowrap flex items-center space-x-1';
+        }
+        floatDiv.innerHTML = `<span>${emoji}</span> <span class="bg-white/80 px-2.5 py-0.5 rounded-full border-2 border-orange-300 text-[10px] font-bold text-gray-700">${encouragementWord}</span> <span class="text-orange-500">+${points}</span>`;
+      }
+      
+      containerElement.appendChild(floatDiv);
+
+      setTimeout(() => {
+        floatDiv.remove();
+      }, isChickaletta ? 1200 : 800); // チカレッタは少し長めに表示
+    }
+
+    function toggleSound() {
+      isSoundMuted = !isSoundMuted;
+      btnToggleSound.textContent = isSoundMuted ? '🔇' : '🔊';
+      initAudio();
+    }
+
+    function showScreen(screen) {
+      [screenStart, screenGame, screenResult].forEach(s => {
+        if (s) {
+          s.classList.add('hidden');
+          s.classList.remove('flex');
+        }
+      });
+      if (screen) {
+        screen.classList.remove('hidden');
+        screen.classList.add('flex');
+      }
+    }
+
+    function startGame() {
+      isPlaying = true;
+      score = 0;
+      timeLeft = GAME_DURATION;
+      if (scoreText) scoreText.textContent = '0';
+      
+      activeHoles.fill(null);
+      holes.forEach(hole => {
+        const wrapper = hole.querySelector('.character-wrapper');
+        if (wrapper) {
+          wrapper.className = 'character-wrapper';
+          wrapper.innerHTML = '';
+          if (wrapper.dataset.timeoutId) {
+            clearTimeout(parseInt(wrapper.dataset.timeoutId));
+            delete wrapper.dataset.timeoutId;
+          }
+        }
+      });
+
+      initAudio();
+      playSoundStart();
+      startBGM();
+      showScreen(screenGame);
+      startTimer();
+      spawnLoop();
+    }
+
+    function startTimer() {
+      if (timerInterval) clearInterval(timerInterval);
+      updateTimerUI();
+      timerInterval = setInterval(() => {
+        if (!isPlaying) {
+          clearInterval(timerInterval);
+          return;
+        }
+        timeLeft--;
+        updateTimerUI();
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function updateTimerUI() {
+      if (timerText) {
+        timerText.textContent = `${timeLeft}びょう`;
+      }
+      if (timerBar) {
+        const percent = (timeLeft / GAME_DURATION) * 100;
+        timerBar.style.width = `${percent}%`;
+        if (timeLeft < 10) {
+          timerBar.className = "bg-gradient-to-r from-red-500 to-orange-500 h-full w-full transition-all duration-1000";
+        } else {
+          timerBar.className = "bg-gradient-to-r from-emerald-400 to-red-400 h-full w-full transition-all duration-1000";
+        }
+      }
+    }
+
+    function endGame() {
+      isPlaying = false;
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      if (spawnTimeout) {
+        clearTimeout(spawnTimeout);
+        spawnTimeout = null;
+      }
+      stopBGM();
+      playSoundTimeup();
+
+      activeHoles.forEach((char, index) => {
+        if (char) {
+          hideCharacter(index);
+        }
+      });
+
+      if (score > bestScore) {
+        bestScore = score;
+        try {
+          localStorage.setItem('pawpat_helper_best_score', bestScore);
+        } catch (e) {
+          console.error("ベストスコアの保存に失敗しました:", e);
+        }
+        if (bestScoreText) {
+          bestScoreText.textContent = bestScore;
+        }
+      }
+
+      if (finalScore) {
+        finalScore.textContent = score;
+      }
+      setResultEvaluation(score);
+
+      setTimeout(() => {
+        showScreen(screenResult);
+      }, 1200);
+    }
+
+    holes.forEach(hole => {
+      function onTouch(e) {
+        e.preventDefault(); 
+        handleTap(e);
+      }
+      hole.addEventListener('touchstart', onTouch, { passive: false });
+      hole.addEventListener('mousedown', (e) => {
+        if (e.pointerType === 'touch' || ('ontouchstart' in window && e.detail === 0)) return;
+        handleTap(e);
+      });
+    });
+
+    // スタート画面のキャラクター紹介グリッドを動的に生成する（画像優先、なければ絵文字バッジに自動フォールバック）
+    function initCharacterIntroGrid() {
+      const grid = document.getElementById('character-intro-grid');
+      if (!grid) return;
+      
+      grid.innerHTML = '';
+      
+      // キャラクターごとに可愛い背景色を設定
+      CHARACTERS.forEach(char => {
+        let bgClass = 'bg-blue-100';
+        let textClass = 'text-blue-700';
+        
+        if (char.id === 'marshall') { bgClass = 'bg-red-100'; textClass = 'text-red-700'; }
+        else if (char.id === 'skye') { bgClass = 'bg-pink-100'; textClass = 'text-pink-700'; }
+        else if (char.id === 'rubble') { bgClass = 'bg-yellow-100'; textClass = 'text-yellow-800'; }
+        else if (char.id === 'rocky') { bgClass = 'bg-green-100'; textClass = 'text-green-700'; }
+        else if (char.id === 'zuma') { bgClass = 'bg-orange-100'; textClass = 'text-orange-700'; }
+        else if (char.id === 'everest') { bgClass = 'bg-cyan-100'; textClass = 'text-cyan-700'; }
+        else if (char.id === 'chickaletta') { bgClass = 'bg-amber-100'; textClass = 'text-amber-800'; }
+        else if (char.id === 'humdinger') { bgClass = 'bg-purple-100 border border-purple-300'; textClass = 'text-purple-700'; }
+
+        const card = document.createElement('div');
+        card.className = `${bgClass} p-1 md:p-1.5 rounded-xl flex flex-col items-center justify-between min-h-[52px] md:min-h-[64px] shadow-sm relative`;
+        
+        // 画像がある場合は画像を表示し、読み込みエラーなら絵文字に自動フォールバック（自動透過処理を適用）
+        let visualHtml = '';
+        if (char.imgUrl) {
+          visualHtml = `
+            <div class="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center relative mb-0.5">
+              <img src="${char.imgUrl}" alt="${char.name}" class="w-full h-full object-contain hidden"
+                   onload="processAndCleanImage(this); this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');"
+                   onerror="this.classList.add('hidden'); this.nextElementSibling.classList.remove('hidden');">
+              <span class="text-xl md:text-2xl fallback-emoji select-none">${char.emoji}</span>
+            </div>
+          `;
+        } else {
+          visualHtml = `<span class="text-xl md:text-2xl mb-0.5 select-none">${char.emoji}</span>`;
+        }
+
+        let labelHtml = `<span class="text-[8px] md:text-[9px] font-black ${textClass}">${char.name}</span>`;
+        if (char.id === 'humdinger') {
+          labelHtml = `<span class="text-[7px] md:text-[8px] font-extrabold text-purple-700 leading-none">🎩ライバール</span>`;
+        }
+
+        card.innerHTML = `
+          ${visualHtml}
+          ${labelHtml}
+        `;
+        
+        grid.appendChild(card);
+      });
+    }
+
+    btnStart.addEventListener('click', startGame);
+    btnRestart.addEventListener('click', () => {
+      stopBGM();
+      startGame();
+    });
+    btnToTitle.addEventListener('click', () => {
+      stopBGM();
+      showScreen(screenStart);
+    });
+    btnToggleSound.addEventListener('click', toggleSound);
+
+    btnSpring.addEventListener('click', () => setSeason('spring'));
+    btnSummer.addEventListener('click', () => setSeason('summer'));
+    btnAutumn.addEventListener('click', () => setSeason('autumn'));
+    btnWinter.addEventListener('click', () => setSeason('winter'));
+
+    window.addEventListener('load', () => {
+      // ベストスコアの読み込み
+      try {
+        const savedBestScore = localStorage.getItem('pawpat_helper_best_score');
+        if (savedBestScore !== null) {
+          bestScore = parseInt(savedBestScore, 10) || 0;
+        }
+      } catch (e) {
+        console.error("ベストスコアの読み込みに失敗しました:", e);
+      }
+      if (bestScoreText) {
+        bestScoreText.textContent = bestScore;
+      }
+
+      // キャラクターリストを初期化
+      initCharacterIntroGrid();
+
+      const currentMonth = new Date().getMonth() + 1; 
+      let defaultSeason = 'summer';
+      if (currentMonth >= 3 && currentMonth <= 5) {
+        defaultSeason = 'spring';
+      } else if (currentMonth >= 6 && currentMonth <= 8) {
+        defaultSeason = 'summer';
+      } else if (currentMonth >= 9 && currentMonth <= 11) {
+        defaultSeason = 'autumn';
+      } else {
+        defaultSeason = 'winter';
+      }
+      
+      setSeason(defaultSeason);
+      startFallingLoop(); 
+      showScreen(screenStart);
+    });
+
+  </script>
+
+  <!-- Vite/React プレビュー用のマウント先（消さないでください） -->
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+</html>
