@@ -49,17 +49,88 @@
       transition: all 0.08s ease;
     }
 
-    /* 畑の土の穴の3D風な影と立体感（より深く、暗くリアルに掘られたシャドウに強化） */
+    /* 畑の土の穴 of 3D風な影と立体感（より深く、暗くリアルに掘られたシャドウに強化） */
     .soil-hole {
       position: relative;
-      background: radial-gradient(circle, #1a0f02 50%, #080400 100%);
+      /* 穴の底面の背景に、CSSグラデーションで「土の乾燥したヒビ」や「湿った土のテクスチャ」を表現する細かいドットパターン */
+      background: 
+        radial-gradient(circle, rgba(142, 85, 41, 0.22) 1px, transparent 1px) 0 0 / 4px 4px,
+        radial-gradient(circle, rgba(10, 5, 2, 0.4) 1.5px, transparent 1.5px) 2px 2px / 4px 4px,
+        radial-gradient(circle, #25180b 20%, #110701 65%, #050200 100%);
+      background-clip: padding-box; /* 背景を描画する範囲をpadding-box（内側）に留める */
+      
+      /* タップ領域を transform: scale() を使わずに視覚的に大きく保ち、かつ指で隠れないように上下左右に透明なクリック拡張マージンを追加 */
+      margin: -10px; /* 親コンテナからはみ出すことで、視覚的に大きく保つ */
+      border: 8px solid transparent; /* 上下左右に十分な透明なクリック拡張マージンを形成 */
+      
       border-radius: 50%;
-      box-shadow: inset 0 10px 15px rgba(0, 0, 0, 0.95), 
-                  inset 0 -4px 8px rgba(0, 0, 0, 0.65),
-                  0 3px 5px rgba(0, 0, 0, 0.35);
+      box-shadow: inset 0 12px 20px rgba(0, 0, 0, 0.95), 
+                  inset 0 -6px 12px rgba(0, 0, 0, 0.75),
+                  inset 0 0 16px rgba(0, 0, 0, 0.85), /* 柔らかい内側へのシャドウを追加し境界を穏やかに */
+                  0 3px 5px rgba(0, 0, 0, 0.3);
       width: 100%;
       height: 100%;
       transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.35);
+    }
+
+    /* 穴の外周（border）に、現在の季節に合わせた植物の蔦や雪の輪郭をデザインした装飾 */
+    .soil-hole::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 18; /* キャラクター(z-index 15)の前面で綺麗に飾る */
+      transition: all 0.5s ease;
+      box-sizing: border-box;
+    }
+
+    /* 春：桜のピンクの輪郭と若草の蔦 */
+    .spring-hole .soil-hole::after {
+      content: '🌸☘️';
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 1px;
+      font-size: 11px;
+      border: 3px solid rgba(244, 143, 177, 0.45);
+      box-shadow: 0 0 8px rgba(244, 143, 177, 0.35);
+    }
+
+    /* 夏：元気なひまわりと青々とした夏草の蔦 */
+    .summer-hole .soil-hole::after {
+      content: '🌻🌿';
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 1px;
+      font-size: 11px;
+      border: 3px solid rgba(132, 204, 22, 0.45);
+      box-shadow: 0 0 8px rgba(132, 204, 22, 0.35);
+    }
+
+    /* 秋：紅葉の落葉とどんぐり・カボチャの装飾 */
+    .autumn-hole .soil-hole::after {
+      content: '🍁🎃';
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 1px;
+      font-size: 11px;
+      border: 3px solid rgba(249, 115, 22, 0.45);
+      box-shadow: 0 0 8px rgba(249, 115, 22, 0.35);
+    }
+
+    /* 冬：雪の積もった白い輪郭と可愛い氷晶 */
+    .winter-hole .soil-hole::after {
+      content: '❄️⛄';
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding-top: 1px;
+      font-size: 11px;
+      border: 3px solid rgba(147, 197, 253, 0.65);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
     }
 
     /* 穴の境界部分（エッジ）に、季節ごとに異なる「草の根」や「氷の結晶」のテクスチャをCSSグラフィックスで表現 */
@@ -67,7 +138,7 @@
       content: '';
       position: absolute;
       inset: -1px;
-      border-radius: 50%;
+      border-radius: inherit;
       pointer-events: none;
       z-index: 5; /* キャラクター(z-index 15)の奥 */
       opacity: 0.9;
@@ -362,29 +433,49 @@
       transform: translateX(-50%) scaleX(1.15) scaleY(1.05);
     }
 
-    /* かくれんぼ風、待機中の可愛い「ひょっこり」「もじもじ」揺れアニメーション */
+    /* 前後に微細に揺れながら少しだけズームして存在感をアピールする待機アニメーション */
     @keyframes peepWobble {
       0%, 100% {
         transform: translateY(0%) scale(1) rotate(0deg);
       }
-      20% {
-        transform: translateY(-2.5%) scale(1.03, 0.97) rotate(1deg);
+      25% {
+        /* 前に少し迫り出すような微小なズームと時計回りのわずかな傾き */
+        transform: translateY(-2%) scale(1.06) rotate(1.5deg);
       }
-      40% {
-        transform: translateY(0%) scale(0.97, 1.03) rotate(-1.5deg);
+      50% {
+        /* 後ろに引く感じのわずかな縮小と反時計回りの傾き */
+        transform: translateY(0%) scale(0.96) rotate(-1.5deg);
       }
-      60% {
-        transform: translateY(-1.2%) scale(1.01, 0.99) rotate(1deg);
-      }
-      80% {
-        transform: translateY(0%) scale(1) rotate(-0.5deg);
+      75% {
+        /* 再び少しズームして正面を向く */
+        transform: translateY(-1%) scale(1.03) rotate(0.5deg);
       }
     }
 
-    /* このクラスがつくとキャラクターが顔を出し、かすかに揺れる待機アニメーションを開始 */
+    /* キャラクターが表示された瞬間、周囲に輪郭を際立たせる白い淡い光がふわっと浮かび上がるエフェクト */
+    @keyframes characterGlow {
+      0% {
+        filter: drop-shadow(0 0 0px rgba(255, 255, 255, 0)) drop-shadow(0 0 0px rgba(255, 255, 255, 0));
+      }
+      15% {
+        /* 出現した直後に最大級のふんわりとした白い光が周囲に広がる */
+        filter: drop-shadow(0 0 14px rgba(255, 255, 255, 1)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.95));
+      }
+      65% {
+        /* 徐々に落ち着いて淡い光へと変化 */
+        filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.65));
+      }
+      100% {
+        /* 背景と完全に馴染みつつも輪郭をくっきりと見せる優しい白色のオーラに落ち着く */
+        filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.45));
+      }
+    }
+
+    /* このクラスがつくとキャラクターが顔を出し、光彩を放ち、前後のズーム揺れ待機を開始 */
     .character-wrapper.up {
       transform: translateY(0%);
-      animation: peepWobble 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+      animation: peepWobble 4.2s cubic-bezier(0.4, 0, 0.2, 1) infinite,
+                 characterGlow 2.0s cubic-bezier(0.25, 1, 0.5, 1) forwards;
     }
 
     /* タップされたときの縮む演出（待機アニメーションを即時に上書き解除） */
@@ -590,9 +681,193 @@
       animation: scoreUp 0.8s ease-out forwards;
       z-index: 50;
     }
+
+    /* ==================== 追加されたインタラクティブ演出 ==================== */
+
+    /* 1. 9つの穴すべてに個性的でいびつな円・楕円の形を定義（有機的な畑を表現） */
+    .hole-container:nth-of-type(1) .soil-hole { border-radius: 47% 53% 50% 50% / 51% 48% 52% 49%; }
+    .hole-container:nth-of-type(2) .soil-hole { border-radius: 52% 48% 51% 49% / 49% 52% 48% 51%; }
+    .hole-container:nth-of-type(3) .soil-hole { border-radius: 49% 51% 48% 52% / 52% 49% 51% 48%; }
+    .hole-container:nth-of-type(4) .soil-hole { border-radius: 51% 49% 52% 48% / 48% 51% 49% 52%; }
+    .hole-container:nth-of-type(5) .soil-hole { border-radius: 48% 52% 49% 51% / 51% 49% 51% 49%; }
+    .hole-container:nth-of-type(6) .soil-hole { border-radius: 53% 47% 51% 49% / 49% 53% 47% 51%; }
+    .hole-container:nth-of-type(7) .soil-hole { border-radius: 50% 50% 48% 52% / 52% 48% 52% 48%; }
+    .hole-container:nth-of-type(8) .soil-hole { border-radius: 51% 49% 50% 50% / 48% 52% 49% 51%; }
+    .hole-container:nth-of-type(9) .soil-hole { border-radius: 48% 52% 52% 48% / 50% 51% 49% 50%; }
+
+    /* 2. キャラクター待機中（wrapper.up）に、土のふくらみ（::before）も揺れにシンクロして優しく波打つ */
+    .spring-hole .soil-hole:has(.character-wrapper.up)::before {
+      animation: springWave 4.2s ease-in-out infinite;
+    }
+    .summer-hole .soil-hole:has(.character-wrapper.up)::before {
+      animation: summerWave 4.2s ease-in-out infinite;
+    }
+    .autumn-hole .soil-hole:has(.character-wrapper.up)::before {
+      animation: autumnWave 4.2s ease-in-out infinite;
+    }
+    .winter-hole .soil-hole:has(.character-wrapper.up)::before {
+      animation: winterWave 4.2s ease-in-out infinite;
+    }
+
+    /* 3D土の盛り上がり（hole-container::before）もシンクロさせて連動wobble */
+    .spring-hole:has(.character-wrapper.up)::before {
+      animation: springMoundWobble 4.2s ease-in-out infinite;
+    }
+    .summer-hole:has(.character-wrapper.up)::before {
+      animation: summerMoundWobble 4.2s ease-in-out infinite;
+    }
+    .autumn-hole:has(.character-wrapper.up)::before {
+      animation: autumnMoundWobble 4.2s ease-in-out infinite;
+    }
+    .winter-hole:has(.character-wrapper.up)::before {
+      animation: winterMoundWobble 4.2s ease-in-out infinite;
+    }
+
+    /* 境界・ふくらみの波打ち（wave）アニメーション定義（キャラクターのpeepWobbleの25%, 50%, 75%タイミングと完全に調和） */
+    @keyframes springWave {
+      0%, 100% {
+        transform: scale(1) rotate(0deg) translateY(0);
+        box-shadow: inset 0 12px 20px rgba(0, 0, 0, 0.95), inset 0 0 12px rgba(21, 128, 61, 0.65);
+      }
+      25% {
+        transform: scale(1.05) rotate(1.5deg) translateY(-1px);
+        box-shadow: inset 0 12px 24px rgba(0, 0, 0, 0.95), inset 0 0 20px rgba(21, 128, 61, 0.9);
+      }
+      50% {
+        transform: scale(0.95) rotate(-1.5deg) translateY(1px);
+        box-shadow: inset 0 10px 18px rgba(0, 0, 0, 0.95), inset 0 0 8px rgba(21, 128, 61, 0.4);
+      }
+      75% {
+        transform: scale(1.02) rotate(0.5deg) translateY(-0.5px);
+        box-shadow: inset 0 12px 22px rgba(0, 0, 0, 0.95), inset 0 0 16px rgba(21, 128, 61, 0.75);
+      }
+    }
+
+    @keyframes summerWave {
+      0%, 100% {
+        transform: scale(1) rotate(0deg) translateY(0);
+        box-shadow: inset 0 12px 20px rgba(0, 0, 0, 0.95), inset 0 0 14px rgba(101, 163, 13, 0.7);
+      }
+      25% {
+        transform: scale(1.05) rotate(-2deg) translateY(-1.5px);
+        box-shadow: inset 0 12px 24px rgba(0, 0, 0, 0.95), inset 0 0 22px rgba(101, 163, 13, 0.9);
+      }
+      50% {
+        transform: scale(0.94) rotate(2deg) translateY(1px);
+        box-shadow: inset 0 10px 18px rgba(0, 0, 0, 0.95), inset 0 0 9px rgba(101, 163, 13, 0.45);
+      }
+      75% {
+        transform: scale(1.02) rotate(-1deg) translateY(-0.5px);
+        box-shadow: inset 0 12px 22px rgba(0, 0, 0, 0.95), inset 0 0 18px rgba(101, 163, 13, 0.8);
+      }
+    }
+
+    @keyframes autumnWave {
+      0%, 100% {
+        transform: scale(1) rotate(0deg) translateY(0);
+        box-shadow: inset 0 12px 20px rgba(0, 0, 0, 0.95), inset 0 0 12px rgba(194, 65, 12, 0.7);
+      }
+      25% {
+        transform: scale(1.04) rotate(1.5deg) translateY(-1px);
+        box-shadow: inset 0 12px 24px rgba(0, 0, 0, 0.95), inset 0 0 20px rgba(194, 65, 12, 0.95);
+      }
+      50% {
+        transform: scale(0.96) rotate(-1.5deg) translateY(1px);
+        box-shadow: inset 0 10px 18px rgba(0, 0, 0, 0.95), inset 0 0 8px rgba(194, 65, 12, 0.4);
+      }
+      75% {
+        transform: scale(1.02) rotate(0.5deg) translateY(-0.5px);
+        box-shadow: inset 0 12px 22px rgba(0, 0, 0, 0.95), inset 0 0 16px rgba(194, 65, 12, 0.8);
+      }
+    }
+
+    @keyframes winterWave {
+      0%, 100% {
+        transform: scale(1) rotate(0deg) translateY(0);
+        box-shadow: inset 0 12px 20px rgba(0, 0, 0, 0.95), inset 0 0 16px rgba(147, 197, 253, 0.65);
+      }
+      25% {
+        transform: scale(1.04) rotate(3deg) translateY(-1.2px);
+        box-shadow: inset 0 12px 26px rgba(0, 0, 0, 0.95), inset 0 0 24px rgba(147, 197, 253, 0.9);
+      }
+      50% {
+        transform: scale(0.96) rotate(-3deg) translateY(0.8px);
+        box-shadow: inset 0 10px 18px rgba(0, 0, 0, 0.95), inset 0 0 10px rgba(147, 197, 253, 0.4);
+      }
+      75% {
+        transform: scale(1.02) rotate(1deg) translateY(-0.4px);
+        box-shadow: inset 0 12px 22px rgba(0, 0, 0, 0.95), inset 0 0 20px rgba(147, 197, 253, 0.75);
+      }
+    }
+
+    @keyframes springMoundWobble {
+      0%, 100% { transform: scaleY(1) translateY(0); }
+      25% { transform: scaleY(1.08) translateY(-1.2px) skewX(2deg); }
+      50% { transform: scaleY(0.94) translateY(0.6px) skewX(-2deg); }
+      75% { transform: scaleY(1.03) translateY(-0.4px) skewX(1deg); }
+    }
+    @keyframes summerMoundWobble {
+      0%, 100% { transform: scaleY(1) translateY(0); }
+      25% { transform: scaleY(1.1) translateY(-1.5px) skewX(-1.5deg); }
+      50% { transform: scaleY(0.92) translateY(0.8px) skewX(1.5deg); }
+      75% { transform: scaleY(1.04) translateY(-0.5px) skewX(-0.5deg); }
+    }
+    @keyframes autumnMoundWobble {
+      0%, 100% { transform: scaleY(1) translateY(0); }
+      25% { transform: scaleY(1.07) translateY(-1.1px) skewX(2.5deg); }
+      50% { transform: scaleY(0.95) translateY(0.5px) skewX(-2.5deg); }
+      75% { transform: scaleY(1.02) translateY(-0.3px) skewX(1.2deg); }
+    }
+    @keyframes winterMoundWobble {
+      0%, 100% { transform: scaleY(1) translateY(0); }
+      25% { transform: scaleY(1.06) translateY(-1.0px) skewX(-2deg); }
+      50% { transform: scaleY(0.96) translateY(0.4px) skewX(2deg); }
+      75% { transform: scaleY(1.01) translateY(-0.2px) skewX(-1deg); }
+    }
+
+    /* 3. 穴の周囲のデコレーションに、タップ時に数秒間だけ色やきらめきが鮮やかに変化するハイライト演出 */
+    .spring-hole.tapped-highlight .soil-hole::after {
+      border-color: #f472b6 !important;
+      box-shadow: 0 0 25px rgba(244, 114, 182, 1), inset 0 0 15px rgba(244, 114, 182, 0.8) !important;
+      filter: saturate(1.8) brightness(1.3) rotate(3deg) scale(1.08);
+    }
+    .summer-hole.tapped-highlight .soil-hole::after {
+      border-color: #22d3ee !important;
+      box-shadow: 0 0 25px rgba(34, 211, 238, 1), inset 0 0 15px rgba(34, 211, 238, 0.8) !important;
+      filter: saturate(1.8) brightness(1.3) rotate(-3deg) scale(1.08);
+    }
+    .autumn-hole.tapped-highlight .soil-hole::after {
+      border-color: #fbbf24 !important;
+      box-shadow: 0 0 25px rgba(251, 191, 36, 1), inset 0 0 15px rgba(251, 191, 36, 0.8) !important;
+      filter: saturate(1.8) brightness(1.3) rotate(3deg) scale(1.08);
+    }
+    .winter-hole.tapped-highlight .soil-hole::after {
+      border-color: #a855f7 !important;
+      box-shadow: 0 0 25px rgba(168, 85, 247, 1), inset 0 0 15px rgba(168, 85, 247, 0.8) !important;
+      filter: saturate(1.8) brightness(1.3) rotate(-5deg) scale(1.08);
+    }
+
+    /* 周囲の回転きらめき粒子リングもシンクロして数秒間強烈にネオンカラー化 */
+    .spring-hole.tapped-highlight::after {
+      border-color: #f472b6 !important;
+      filter: drop-shadow(0 0 15px #f472b6) brightness(1.5) !important;
+    }
+    .summer-hole.tapped-highlight::after {
+      border-color: #22d3ee !important;
+      filter: drop-shadow(0 0 15px #22d3ee) brightness(1.5) !important;
+    }
+    .autumn-hole.tapped-highlight::after {
+      border-color: #fbbf24 !important;
+      filter: drop-shadow(0 0 15px #fbbf24) brightness(1.5) !important;
+    }
+    .winter-hole.tapped-highlight::after {
+      border-color: #a855f7 !important;
+      filter: drop-shadow(0 0 15px #a855f7) brightness(1.5) !important;
+    }
+
   </style>
 </head>
-<body class="bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200 min-h-screen flex flex-col justify-between overflow-hidden relative">
+<body class="bg-gradient-to-b from-sky-300 via-sky-200 to-emerald-200 h-[100dvh] flex flex-col justify-between overflow-hidden relative select-none">
 
   <!-- ゲーム終了時の暖色系やわらかフェードイン用オーバーレイ（やわらかなグラデーションで終了時の唐突感を軽減します） -->
   <div id="end-game-overlay" class="fixed inset-0 bg-gradient-to-tr from-amber-100/60 via-orange-100/50 to-rose-100/60 pointer-events-none opacity-0 transition-opacity duration-1000 z-40"></div>
@@ -603,117 +878,119 @@
     <div class="cloud-2 absolute top-16 left-0 text-white text-5xl opacity-30">☁️</div>
   </div>
 
-  <!-- ゆっくり舞い落ちる季節の装飾用コンテナ -->
+  <!-- ゆっくり舞い落ちる季節 of 装飾用コンテナ -->
   <div id="falling-container" class="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-5"></div>
 
   <!-- ゲーム全体コンテナ -->
-  <div id="game-container" class="relative w-full max-w-md mx-auto flex flex-col justify-between flex-grow z-10 px-4 py-2">
+  <div id="game-container" class="relative w-full max-w-md mx-auto flex flex-col justify-between h-full max-h-[100dvh] overflow-hidden z-10 px-4 py-2">
     
     <!-- ==================== 1. スタート画面 ==================== -->
-    <div id="screen-start" class="flex flex-col justify-between items-center text-center flex-grow py-3">
+    <div id="screen-start" class="flex flex-col justify-between items-center text-center h-full py-1.5 gap-2 overflow-hidden">
       
       <!-- 季節のきりかえボタン -->
-      <div class="w-full bg-white/80 border-2 border-dashed border-amber-300 rounded-2xl p-1.5 flex flex-col items-center">
-        <span class="text-[10px] font-bold text-amber-800 mb-1">🌸 きせつを タッチして かえられるよ 🌻</span>
+      <div class="w-full bg-white/80 border-2 border-dashed border-amber-300 rounded-2xl p-1 flex flex-col items-center">
+        <span class="text-[9px] font-bold text-amber-800 mb-0.5">🌸 きせつを タッチして かえられるよ 🌻</span>
         <div class="flex justify-around w-full max-w-xs">
-          <button id="btn-season-spring" class="flex flex-col items-center px-2 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
-            <span class="text-xl">🌸</span>
+          <button id="btn-season-spring" class="flex flex-col items-center px-1.5 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
+            <span class="text-lg">🌸</span>
             <span class="text-[8px] font-bold text-pink-500">はる</span>
           </button>
-          <button id="btn-season-summer" class="flex flex-col items-center px-2 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
-            <span class="text-xl">🌻</span>
+          <button id="btn-season-summer" class="flex flex-col items-center px-1.5 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
+            <span class="text-lg">🌻</span>
             <span class="text-[8px] font-bold text-amber-500">なつ</span>
           </button>
-          <button id="btn-season-autumn" class="flex flex-col items-center px-2 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
-            <span class="text-xl">🍁</span>
+          <button id="btn-season-autumn" class="flex flex-col items-center px-1.5 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
+            <span class="text-lg">🍁</span>
             <span class="text-[8px] font-bold text-orange-600">あき</span>
           </button>
-          <button id="btn-season-winter" class="flex flex-col items-center px-2 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
-            <span class="text-xl">❄️</span>
+          <button id="btn-season-winter" class="flex flex-col items-center px-1.5 py-0.5 rounded-xl hover:bg-white active:scale-90 transition-all border-2 border-transparent">
+            <span class="text-lg">❄️</span>
             <span class="text-[8px] font-bold text-sky-600">ふゆ</span>
           </button>
         </div>
       </div>
 
-      <div class="mt-1">
+      <div class="mt-0.5 flex flex-col items-center">
         <!-- おひさま -->
-        <div id="start-sun-icon" class="text-4xl mb-0.5 animate-bounce">☀️</div>
-        <h1 class="text-3xl md:text-4xl font-extrabold text-blue-600 tracking-wider leading-none drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
+        <div id="start-sun-icon" class="text-3xl mb-0.5 animate-bounce">☀️</div>
+        <h1 class="text-2xl md:text-3xl font-extrabold text-blue-600 tracking-wider leading-none drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
           パウパト<br>
-          <span class="text-orange-500 text-3xl md:text-4xl">たたきゲーム</span>
+          <span class="text-orange-500 text-2xl md:text-3xl">たたきゲーム</span>
         </h1>
-        <p class="text-[9px] font-bold text-gray-700 mt-1 bg-white/70 px-2.5 py-0.5 rounded-full inline-block">
-          🎵おんがくつき
-        </p>
-        <br>
+        
         <!-- ベストスコア表示 -->
-        <div class="mt-2 bg-yellow-100/95 border border-yellow-300 rounded-full px-4 py-1 inline-flex items-center space-x-1.5 shadow-sm">
-          <span class="text-xs">👑</span>
-          <span class="text-xs font-black text-amber-800">ベストスコア:</span>
-          <span id="best-score-text" class="text-sm font-black text-orange-600">0</span>
-          <span class="text-[9px] font-bold text-amber-800">てん</span>
+        <div class="mt-1 bg-yellow-100/95 border border-yellow-300 rounded-full px-3.5 py-0.5 inline-flex items-center space-x-1 shadow-sm">
+          <span class="text-[11px]">👑</span>
+          <span class="text-[10px] font-black text-amber-800">ベストスコア:</span>
+          <span id="best-score-text" class="text-xs font-black text-orange-600">0</span>
+          <span class="text-[8px] font-bold text-amber-800">てん</span>
         </div>
       </div>
 
-      <!-- キャラクター大集合エリア（幼児が「だれが出るのかな？」とワクワクする演出） -->
-      <div class="w-full bg-white/60 p-2 rounded-2xl border border-white/80 shadow-inner">
-        <span class="text-[9px] font-bold text-blue-700 block mb-1">🌟 しゅつげんする なかまたち（全8しゅるい！）</span>
-        <div id="character-intro-grid" class="grid grid-cols-4 gap-1.5">
-          <!-- JSで動的に生成されます（画像優先、なければ絵文字で可愛く表示されます） -->
+      <!-- あそびかた (タップして開く箱) -->
+      <div class="w-full max-w-xs flex flex-col items-center relative z-20">
+        <button id="btn-toggle-rules" class="w-full py-1.5 px-4 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border-2 border-emerald-300 font-extrabold text-[11px] rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all focus:outline-none">
+          <span>💡 あそびかたを みる</span>
+          <span id="rules-toggle-icon" class="text-xs transition-transform duration-300">▼</span>
+        </button>
+        <div id="start-rules-container" class="w-full bg-white/95 p-2 rounded-xl border-2 border-emerald-300 shadow-md mt-1 hidden transition-all">
+          <p class="text-[9px] md:text-[10px] font-medium text-gray-700 leading-normal text-left">
+            ピョコッ とでてくる なかまたちを タッチ しよう！<br>
+            いたずらな <span class="text-purple-600 font-extrabold">「ライバールしちょう (🎩)」</span>をタッチすると<br>
+            てんすうが <span class="text-red-500 font-extrabold">ひかれちゃう (-10てん)</span> から きをつけてね！
+          </p>
+          
+          <!-- キャラクター大集合エリア（あそびかたアコーディオンの中に移動） -->
+          <div class="w-full bg-white/60 p-1 rounded-xl border border-white/80 shadow-inner mt-1.5">
+            <span class="text-[8px] font-bold text-blue-700 block mb-0.5">🌟 しゅつげんする なかまたち（全8しゅるい！）</span>
+            <div id="character-intro-grid" class="grid grid-cols-4 gap-1">
+              <!-- JSで動的に生成されます（画像優先、なければ絵文字で可愛く表示されます） -->
+            </div>
+          </div>
         </div>
-      </div>
-
-      <!-- あそびかた -->
-      <div class="bg-white/95 rounded-xl p-2.5 shadow-md w-full border-2 border-emerald-300">
-        <p class="text-[11px] font-bold text-emerald-700 mb-0.5">💡 あそびかた 💡</p>
-        <p class="text-[10px] font-medium text-gray-700 leading-normal">
-          ピョコッ とでてくる なかまたちを タッチ しよう！<br>
-          いたずらな <span class="text-purple-600 font-extrabold">「ライバールしちょう (🎩)」</span>をタッチすると<br>
-          てんすうが <span class="text-red-500 font-extrabold">ひかれちゃう (-10てん)</span> から きをつけてね！
-        </p>
       </div>
 
       <!-- 難易度選択スタートボタン（やさしい & むずかしい の2種類から選んで直接スタート！） -->
-      <div class="flex flex-col gap-3 w-full max-w-xs">
+      <div class="flex flex-col gap-2 w-full max-w-xs">
         <!-- やさしいボタン -->
-        <button id="btn-start-easy" class="btn-bouncy w-full py-3 px-5 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-500 border-b-8 border-emerald-900 text-white font-black rounded-full shadow-[0_8px_20px_rgba(16,185,129,0.4)] border-4 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none">
-          <span class="block text-yellow-100 text-[10px] md:text-xs font-black tracking-widest mb-0.5 text-pop-outline-yellow">🐢 ゆっくりでてくるよ 🎵</span>
-          <span class="text-pop-outline-green font-black text-2xl md:text-3xl tracking-wider block">🟢 やさしい</span>
+        <button id="btn-start-easy" class="btn-bouncy w-full py-2 px-4 bg-gradient-to-r from-emerald-400 via-teal-500 to-emerald-500 border-b-6 border-emerald-900 text-white font-black rounded-full shadow-[0_5px_15px_rgba(16,185,129,0.3)] border-2 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none">
+          <span class="block text-yellow-100 text-[9px] md:text-xs font-black tracking-widest mb-0.5 text-pop-outline-yellow">🐢 ゆっくりでてくるよ 🎵</span>
+          <span class="text-pop-outline-green font-black text-xl md:text-2xl tracking-wider block">🟢 やさしい</span>
         </button>
 
         <!-- むずかしいボタン -->
-        <button id="btn-start-hard" class="btn-bouncy w-full py-3 px-5 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 border-b-8 border-red-950 text-white font-black rounded-full shadow-[0_8px_20px_rgba(239,68,68,0.4)] border-4 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none">
-          <span class="block text-yellow-100 text-[10px] md:text-xs font-black tracking-widest mb-0.5 text-pop-outline-yellow">⚡ はやくでてくるよ 🎵</span>
-          <span class="text-pop-outline-red font-black text-2xl md:text-3xl tracking-wider block">🔴 むずかしい</span>
+        <button id="btn-start-hard" class="btn-bouncy w-full py-2 px-4 bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 border-b-6 border-red-950 text-white font-black rounded-full shadow-[0_5px_15px_rgba(239,68,68,0.3)] border-2 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none">
+          <span class="block text-yellow-100 text-[9px] md:text-xs font-black tracking-widest mb-0.5 text-pop-outline-yellow">⚡ はやくでてくるよ 🎵</span>
+          <span class="text-pop-outline-red font-black text-xl md:text-2xl tracking-wider block">🔴 むずかしい</span>
         </button>
       </div>
 
       <!-- プレイ記録を見るボタンと履歴エリア (Start Screen) -->
-      <div class="w-full max-w-xs flex flex-col items-center mt-1">
+      <div class="w-full max-w-xs flex flex-col items-center mt-0.5">
         <!-- 履歴を開くトグルボタン -->
-        <button id="btn-toggle-history" class="w-full py-2.5 px-4 bg-amber-100 hover:bg-amber-200 text-amber-800 border-2 border-amber-300 font-extrabold text-xs rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all focus:outline-none">
+        <button id="btn-toggle-history" class="w-full py-1.5 px-4 bg-amber-100 hover:bg-amber-200 text-amber-800 border-2 border-amber-300 font-extrabold text-[11px] rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all focus:outline-none">
           <span>📈 プレイきろくを みる</span>
           <span id="history-toggle-icon" class="text-xs transition-transform duration-300">▼</span>
         </button>
 
         <!-- 履歴エリア（ボタンを押したら表示される） -->
-        <div id="start-history-container" class="w-full bg-white/95 p-2.5 rounded-xl border-2 border-amber-300 shadow-md mt-2 hidden transition-all">
+        <div id="start-history-container" class="w-full bg-white/95 p-2 rounded-xl border-2 border-amber-300 shadow-md mt-1.5 hidden transition-all">
           <!-- 難易度切り替え用のタブ -->
-          <div class="flex justify-between border-b-2 border-amber-100 pb-1.5 mb-2 gap-1.5">
-            <button id="btn-tab-easy" class="flex-1 text-[9px] font-black py-1 px-1.5 rounded-lg bg-emerald-500 text-white border border-emerald-600 shadow-sm transition-all focus:outline-none">
+          <div class="flex justify-between border-b-2 border-amber-100 pb-1 mb-1.5 gap-1">
+            <button id="btn-tab-easy" class="flex-1 text-[8px] font-black py-0.5 px-1 rounded-lg bg-emerald-500 text-white border border-emerald-600 shadow-sm transition-all focus:outline-none">
               🟢 やさしい (0)
             </button>
-            <button id="btn-tab-hard" class="flex-1 text-[9px] font-black py-1 px-1.5 rounded-lg bg-gray-100 text-gray-500 border border-gray-200 transition-all focus:outline-none">
+            <button id="btn-tab-hard" class="flex-1 text-[8px] font-black py-0.5 px-1 rounded-lg bg-gray-100 text-gray-500 border border-gray-200 transition-all focus:outline-none">
               🔴 むずかしい (0)
             </button>
           </div>
 
           <div class="flex items-center justify-between mb-1">
-            <span id="history-filter-title" class="text-[9px] font-extrabold text-amber-800 flex items-center gap-1">🟢 やさしい の きろく (10かい)</span>
+            <span id="history-filter-title" class="text-[8px] font-extrabold text-amber-800 flex items-center gap-1">🟢 やさしい の きろく (10かい)</span>
             <button id="btn-clear-history" class="text-[8px] bg-red-100 hover:bg-red-200 text-red-600 font-bold px-1.5 py-0.5 rounded-md transition-colors focus:outline-none">きろくをけす</button>
           </div>
 
-          <div id="start-history-list" class="max-h-24 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin">
+          <div id="start-history-list" class="max-h-20 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin">
             <!-- 履歴項目が動的に生成されます -->
           </div>
         </div>
@@ -721,23 +998,15 @@
     </div>
 
     <!-- ==================== 2. ゲーム本編画面 ==================== -->
-    <div id="screen-game" class="hidden flex-col justify-between flex-grow relative">
+    <div id="screen-game" class="hidden flex-col justify-between h-full relative overflow-hidden">
       
       <!-- カウントダウン演出用のオーバーレイ -->
       <div id="countdown-overlay" class="hidden absolute inset-0 bg-emerald-950/60 backdrop-blur-sm rounded-2xl z-30 flex flex-col items-center justify-center">
-        <div id="countdown-text" class="text-white font-black text-8xl md:text-9xl drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] text-pop-outline-yellow transition-all duration-300">3</div>
-      </div>
-
-      <!-- コンボ表示（コンボ発生時に右からぴょこっと飛び出す） -->
-      <div id="combo-badge" class="absolute right-2 top-20 z-20 hidden pointer-events-none transform transition-all duration-300 scale-0 origin-right">
-        <div class="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 text-white font-black px-4 py-1.5 rounded-full shadow-lg border-2 border-yellow-200 flex flex-col items-center justify-center leading-none">
-          <span id="combo-text" class="text-xl md:text-2xl text-pop-outline-yellow tracking-wider">3 こんぼ！🔥</span>
-          <span id="combo-multiplier" class="text-[9px] font-bold text-yellow-100 mt-0.5 font-sans">スコア 1.2ばい！⚡</span>
-        </div>
+        <div id="countdown-text" class="text-white font-black text-8xl drop-shadow-[0_4px_10px_rgba(0,0,0,0.5)] text-pop-outline-yellow transition-all duration-300">3</div>
       </div>
       
       <!-- ヘッダー情報（制限時間、スコア） -->
-      <div class="bg-white/80 border-4 border-emerald-400 rounded-2xl p-2 flex justify-between items-center shadow-md">
+      <div class="bg-white/80 border-2 border-emerald-400 rounded-2xl p-1.5 flex justify-between items-center shadow-md">
         <!-- のこりじかん -->
         <div class="flex flex-col items-start w-2/5 pr-1">
           <div class="flex items-center space-x-1">
@@ -767,6 +1036,17 @@
           <div class="flex items-baseline space-x-0.5">
             <span id="score-text" class="text-2xl font-extrabold text-orange-500">0</span>
             <span class="text-[9px] font-bold text-gray-600">てん</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- コンボ表示用かつヘッダーと盤面の間のマージンエリア（これによって穴が上にずれず、絶対に被らなくなります！） -->
+      <div class="h-10 relative w-full flex items-center justify-end px-1 z-20">
+        <!-- コンボ表示（コンボ発生時に右からぴょこっと飛び出す） -->
+        <div id="combo-badge" class="absolute right-2 top-0.5 hidden pointer-events-none transform transition-all duration-300 scale-0 origin-right">
+          <div class="bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 text-white font-black px-3 py-0.5 rounded-full shadow-md border border-yellow-200 flex flex-col items-center justify-center leading-none">
+            <span id="combo-text" class="text-sm text-pop-outline-yellow tracking-wider">3 こんぼ！🔥</span>
+            <span id="combo-multiplier" class="text-[8px] font-bold text-yellow-100 mt-0.5 font-sans">スコア 1.2ばい！⚡</span>
           </div>
         </div>
       </div>
@@ -846,58 +1126,58 @@
     </div>
 
     <!-- ==================== 3. リザルト（けっか）画面 ==================== -->
-    <div id="screen-result" class="hidden flex-col justify-between items-center text-center flex-grow py-4">
+    <div id="screen-result" class="hidden flex-col justify-between items-center text-center h-full py-1.5 gap-1.5 overflow-hidden">
       
       <div>
-        <div class="text-5xl mb-1 animate-bounce">✨🏆✨</div>
-        <h2 class="text-2xl font-extrabold text-blue-600 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
+        <div class="text-4xl mb-0.5 animate-bounce">✨🏆✨</div>
+        <h2 class="text-xl font-extrabold text-blue-600 drop-shadow-[0_2px_2px_rgba(255,255,255,0.8)]">
           おてつだい おしまい！
         </h2>
-        <p class="text-emerald-700 font-bold text-xs mt-1">よく がんばったね！</p>
+        <p class="text-emerald-700 font-bold text-xs mt-0.5">よく がんばったね！</p>
       </div>
 
       <!-- スコアとメダル表示 -->
-      <div class="bg-white/95 rounded-2xl p-5 shadow-lg border-4 border-yellow-300 w-full max-w-sm my-3 relative overflow-hidden">
+      <div class="bg-white/95 rounded-2xl p-3 shadow-lg border-4 border-yellow-300 w-full max-w-sm my-1 relative overflow-hidden">
         
         <!-- 新記録スタンプ（新記録達成時にダイナミックにスタンプされる演出用） -->
-        <div id="new-record-stamp" class="absolute -right-4 -top-3 w-24 h-24 bg-gradient-to-br from-red-500 to-rose-600 border-4 border-yellow-300 text-white font-extrabold flex flex-col items-center justify-center rounded-full shadow-lg z-20 pointer-events-none transform rotate-12 scale-0 opacity-0 transition-all duration-500">
-          <span class="text-[10px] tracking-widest text-yellow-200 animate-pulse">BEST!</span>
-          <span class="text-base font-black text-pop-outline-red">しんきろく</span>
-          <span class="text-[8px] text-yellow-100">おめでとう！</span>
+        <div id="new-record-stamp" class="absolute -right-4 -top-3 w-20 h-20 bg-gradient-to-br from-red-500 to-rose-600 border-4 border-yellow-300 text-white font-extrabold flex flex-col items-center justify-center rounded-full shadow-lg z-20 pointer-events-none transform rotate-12 scale-0 opacity-0 transition-all duration-500">
+          <span class="text-[8px] tracking-widest text-yellow-200 animate-pulse">BEST!</span>
+          <span class="text-sm font-black text-pop-outline-red">しんきろく</span>
+          <span class="text-[7px] text-yellow-100">おめでとう！</span>
         </div>
 
-        <div id="result-medal" class="text-6xl mb-1 filter drop-shadow">🥇</div>
+        <div id="result-medal" class="text-4xl mb-0.5 filter drop-shadow">🥇</div>
         
-        <p class="text-gray-500 font-bold text-xs">あなたの てんすう</p>
-        <div class="flex justify-center items-baseline space-x-0.5 my-1">
-          <span id="final-score" class="text-4xl font-black text-orange-500">0</span>
-          <span class="text-lg font-bold text-gray-700">てん</span>
+        <p class="text-gray-500 font-bold text-[10px]">あなたの てんすう</p>
+        <div class="flex justify-center items-baseline space-x-0.5 my-0.5">
+          <span id="final-score" class="text-3xl font-black text-orange-500">0</span>
+          <span class="text-sm font-bold text-gray-700">てん</span>
         </div>
 
         <!-- ほめ言葉メッセージ -->
-        <div id="result-message" class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-100 leading-relaxed">
+        <div id="result-message" class="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-2 py-1.5 rounded-xl border border-emerald-100 leading-relaxed">
           グッドウェイしちょうも<br>おおいそぎで かんしゃ しているよ！
         </div>
       </div>
 
       <!-- プレイ履歴エリア (Result Screen) -->
-      <div id="result-history-container" class="w-full max-w-sm bg-white/90 p-2.5 rounded-xl border-2 border-yellow-300 shadow-sm mb-3 hidden">
-        <span class="text-xs font-black text-amber-800 flex items-center gap-1 mb-1">📈 さいきんの プレイきろく (10かい)</span>
-        <div id="result-history-list" class="max-h-24 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin">
+      <div id="result-history-container" class="w-full max-w-sm bg-white/90 p-1.5 rounded-xl border border-yellow-300 shadow-sm mb-1 hidden">
+        <span class="text-[10px] font-black text-amber-800 flex items-center gap-1 mb-0.5">📈 さいきんの プレイきろく (10かい)</span>
+        <div id="result-history-list" class="max-h-16 overflow-y-auto space-y-1 text-left pr-1 scrollbar-thin">
           <!-- 履歴項目が動的に生成されます -->
         </div>
       </div>
 
       <!-- アクションボタン（並べて配置してより見やすく、おてつだい選択がスムーズに！） -->
-      <div class="w-full max-w-xs flex flex-col space-y-3 mb-2">
+      <div class="w-full max-w-xs flex flex-col space-y-2 mb-1">
         <!-- もういちどあそぶボタン（背景と違う超目立つエメラルド・イエローグリーン ＋ 抜群に見やすいポップな袋文字！） -->
-        <button id="btn-restart" class="btn-bouncy w-full py-4 px-6 bg-gradient-to-r from-emerald-500 via-teal-500 to-lime-500 border-b-8 border-emerald-900 text-white font-black text-2xl md:text-3xl rounded-full shadow-[0_12px_30px_rgba(16,185,129,0.5)] border-4 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none tracking-wider">
-          <span class="text-pop-outline-green font-extrabold text-3xl md:text-4xl tracking-widest block">もういちど あそぶ 🔄</span>
+        <button id="btn-restart" class="btn-bouncy w-full py-2 px-4 bg-gradient-to-r from-emerald-500 via-teal-500 to-lime-500 border-b-6 border-emerald-900 text-white font-black text-lg md:text-xl rounded-full shadow-[0_5px_15px_rgba(16,185,129,0.4)] border-2 border-yellow-200 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none tracking-wider">
+          <span class="text-pop-outline-green font-extrabold text-xl md:text-2xl tracking-widest block">もういちど あそぶ 🔄</span>
         </button>
         
         <!-- タイトルにもどるボタン（抜群に目立つポップなブルー・スカイグラデーション ＋ 見やすい大きな袋文字！） -->
-        <button id="btn-to-title" class="btn-bouncy w-full py-3 px-6 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-500 border-b-8 border-blue-900 text-white font-black text-xl md:text-2xl rounded-full shadow-[0_8px_20px_rgba(59,130,246,0.4)] border-4 border-yellow-100 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none tracking-wider">
-          <span class="text-pop-outline-blue font-extrabold text-2xl md:text-3xl tracking-wider block">タイトルに もどる 🏠</span>
+        <button id="btn-to-title" class="btn-bouncy w-full py-1.5 px-4 bg-gradient-to-r from-blue-500 via-cyan-500 to-indigo-500 border-b-6 border-blue-900 text-white font-black text-sm md:text-base rounded-full shadow-[0_5px_15px_rgba(59,130,246,0.3)] border-2 border-yellow-100 hover:scale-105 active:scale-95 hover:brightness-110 transition-all focus:outline-none tracking-wider">
+          <span class="text-pop-outline-blue font-extrabold text-base md:text-lg tracking-wider block">タイトルに もどる 🏠</span>
         </button>
       </div>
     </div>
@@ -1815,6 +2095,14 @@
 
       // タップ時も土ぼこり＆波打ちアニメーションをトリガー！
       triggerHoleInteraction(hole);
+
+      // タップ時のハイライト（数秒間色を鮮やかに変化させる）
+      hole.classList.remove('tapped-highlight');
+      void hole.offsetWidth; // Force reflow
+      hole.classList.add('tapped-highlight');
+      setTimeout(() => {
+        hole.classList.remove('tapped-highlight');
+      }, 2000);
 
       if (wrapper.dataset.timeoutId) {
         clearTimeout(parseInt(wrapper.dataset.timeoutId));
@@ -2741,6 +3029,25 @@
           } else {
             startHistoryContainer.classList.add('hidden');
             if (historyToggleIcon) historyToggleIcon.textContent = '▼';
+          }
+        });
+      }
+
+      // あそびかたトグルボタンのイベント登録
+      const btnToggleRules = document.getElementById('btn-toggle-rules');
+      const startRulesContainer = document.getElementById('start-rules-container');
+      const rulesToggleIcon = document.getElementById('rules-toggle-icon');
+      
+      if (btnToggleRules && startRulesContainer) {
+        btnToggleRules.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isHidden = startRulesContainer.classList.contains('hidden');
+          if (isHidden) {
+            startRulesContainer.classList.remove('hidden');
+            if (rulesToggleIcon) rulesToggleIcon.textContent = '▲';
+          } else {
+            startRulesContainer.classList.add('hidden');
+            if (rulesToggleIcon) rulesToggleIcon.textContent = '▼';
           }
         });
       }
